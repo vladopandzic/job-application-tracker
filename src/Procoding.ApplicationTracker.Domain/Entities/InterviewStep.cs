@@ -1,15 +1,15 @@
-﻿using Procoding.ApplicationTracker.Domain.Abstractions;
+using Procoding.ApplicationTracker.Domain.Abstractions;
 using Procoding.ApplicationTracker.Domain.Common;
-using System.Xml.Linq;
 
 namespace Procoding.ApplicationTracker.Domain.Entities;
 
 /// <summary>
-/// Represents one step in job application interview process.
+/// Represents one step in the job application / interview process (e.g. a phone screen or a
+/// technical interview), with when it happened, its outcome and free-text notes.
 /// </summary>
 public sealed class InterviewStep : EntityBase, IAuditableEntity, ISoftDeletableEntity
 {
-    public static readonly int MaxLengthForDescription = 255;
+    public static readonly int MaxLengthForNotes = 1000;
 
 #pragma warning disable CS8618
     private InterviewStep()
@@ -18,44 +18,78 @@ public sealed class InterviewStep : EntityBase, IAuditableEntity, ISoftDeletable
 #pragma warning restore CS8618
 
     /// <summary>
-    /// Creates new instance of interview step.
+    /// Creates a new interview step.
     /// </summary>
-    /// <param name="jobApplication">Job application.</param>
+    /// <param name="jobApplication">The job application this step belongs to.</param>
     /// <param name="id">Id of the interview step.</param>
-    /// <param name="description">Description of the interview step.</param>
-    /// <param name="inteviewStepType">Intervies step type.</param>
-    public InterviewStep(JobApplication jobApplication, Guid id, string description, InterviewStepType inteviewStepType) : base(id)
+    /// <param name="type">Type of the step.</param>
+    /// <param name="occurredOn">When the step took place or is scheduled.</param>
+    /// <param name="outcome">Outcome of the step.</param>
+    /// <param name="notes">Optional free-text notes / comment.</param>
+    public InterviewStep(JobApplication jobApplication,
+                         Guid id,
+                         InterviewStepType type,
+                         DateTime occurredOn,
+                         InterviewStepOutcome outcome,
+                         string? notes) : base(id)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(description);
-
-        if (description.Length > MaxLengthForDescription)
-        {
-            throw new ArgumentException($"Description can not be longer than {MaxLengthForDescription} characters");
-        }
         if (jobApplication is null)
         {
-            throw new ArgumentNullException($"JobApplication can not be null");
-
+            throw new ArgumentNullException(nameof(jobApplication));
         }
-        Description = description;
+
+        if (notes is not null && notes.Length > MaxLengthForNotes)
+        {
+            throw new ArgumentException($"Notes can not be longer than {MaxLengthForNotes} characters");
+        }
+
         JobApplication = jobApplication;
-        InteviewStepType = inteviewStepType;
+        Type = type;
+        OccurredOn = occurredOn;
+        Outcome = outcome;
+        Notes = notes;
     }
 
     /// <summary>
-    /// Description of the interview step.
+    /// Updates the details of this interview step.
     /// </summary>
-    public string Description { get; }
+    public void Update(InterviewStepType type, DateTime occurredOn, InterviewStepOutcome outcome, string? notes)
+    {
+        if (notes is not null && notes.Length > MaxLengthForNotes)
+        {
+            throw new ArgumentException($"Notes can not be longer than {MaxLengthForNotes} characters");
+        }
+
+        Type = type;
+        OccurredOn = occurredOn;
+        Outcome = outcome;
+        Notes = notes;
+    }
 
     /// <summary>
-    /// Interview step type.
+    /// Type of the interview step (e.g. phone screen, technical interview).
     /// </summary>
-    public InterviewStepType InteviewStepType { get; }
+    public InterviewStepType Type { get; private set; }
 
     /// <summary>
-    /// Job application this inteview step belongs to.
+    /// When the step took place or is scheduled.
     /// </summary>
-    public JobApplication JobApplication { get; }
+    public DateTime OccurredOn { get; private set; }
+
+    /// <summary>
+    /// Outcome of the step.
+    /// </summary>
+    public InterviewStepOutcome Outcome { get; private set; }
+
+    /// <summary>
+    /// Free-text notes / comment about the step.
+    /// </summary>
+    public string? Notes { get; private set; }
+
+    /// <summary>
+    /// Job application this interview step belongs to.
+    /// </summary>
+    public JobApplication JobApplication { get; private set; }
 
     /// <inheritdoc/>
     public DateTime? DeletedOnUtc { get; private set; }

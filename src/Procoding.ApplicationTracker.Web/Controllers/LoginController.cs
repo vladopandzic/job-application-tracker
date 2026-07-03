@@ -46,7 +46,7 @@ public class LoginController : Controller
                 var user = new ClaimsPrincipal(identity);
 
                 await HttpContext.SignInAsync(user);
-                return Redirect("/");
+                return Redirect("/home");
             }
             ModelState.AddModelError(string.Empty, "Invalid login attempt.");
         }

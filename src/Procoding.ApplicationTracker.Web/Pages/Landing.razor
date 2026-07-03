@@ -1,0 +1,112 @@
+@page "/"
+@layout MarketingLayout
+@attribute [AllowAnonymous]
+@using Procoding.ApplicationTracker.Web.Localization
+@implements IDisposable
+@inject LocalizationService Loc
+
+<PageTitle>JobTrek — Track every job application in one place</PageTitle>
+
+<section class="mkt-hero">
+    <div class="mkt-hero-inner">
+        <div class="mkt-hero-copy">
+            <span class="mkt-eyebrow">@Loc.T("mkt.hero.eyebrow")</span>
+            <h1>@Loc.T("mkt.hero.titlePre") <span class="grad">@Loc.T("mkt.hero.titleHighlight")</span>.</h1>
+            <p>@Loc.T("mkt.hero.subtitle")</p>
+            <div class="mkt-hero-cta">
+                <AuthLink Href="/Signup" Class="mkt-btn mkt-btn-primary mkt-btn-lg">@Loc.T("mkt.hero.ctaPrimary")</AuthLink>
+                <AuthLink Href="/Login" Class="mkt-btn mkt-btn-ghost mkt-btn-lg">@Loc.T("mkt.hero.ctaSecondary")</AuthLink>
+            </div>
+            <div class="mkt-hero-trust">@Loc.T("mkt.hero.trust")</div>
+        </div>
+
+        <div class="mkt-hero-visual">
+            <div class="mkt-board">
+                <div>
+                    <div class="mkt-col-head"><span class="mkt-dot applied"></span> @Loc.T("status.applied")</div>
+                    <div class="mkt-mini"><b>.NET Backend Engineer</b><span>Acme Corp</span><div class="tag">Remote</div></div>
+                    <div class="mkt-mini"><b>Full-Stack Developer</b><span>Globex</span><div class="tag">Hybrid</div></div>
+                </div>
+                <div>
+                    <div class="mkt-col-head"><span class="mkt-dot progress"></span> @Loc.T("status.inProcess")</div>
+                    <div class="mkt-mini"><b>Senior C# Engineer</b><span>Initech</span><div class="tag">Contract</div></div>
+                </div>
+                <div>
+                    <div class="mkt-col-head"><span class="mkt-dot offer"></span> @Loc.T("status.offer")</div>
+                    <div class="mkt-mini"><b>Lead Backend Dev</b><span>Acme Corp</span><div class="tag">Remote</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="features" class="mkt-section">
+    <h2>@Loc.T("mkt.features.title")</h2>
+    <p class="lead">@Loc.T("mkt.features.lead")</p>
+
+    <div class="mkt-features">
+        <div class="mkt-feature">
+            <div class="ic">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="6" height="18" rx="1"/><rect x="9.5" y="3" width="6" height="12" rx="1"/><rect x="16" y="3" width="5" height="8" rx="1"/></svg>
+            </div>
+            <h3>@Loc.T("mkt.feature1.title")</h3>
+            <p>@Loc.T("mkt.feature1.desc")</p>
+        </div>
+        <div class="mkt-feature">
+            <div class="ic">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </div>
+            <h3>@Loc.T("mkt.feature2.title")</h3>
+            <p>@Loc.T("mkt.feature2.desc")</p>
+        </div>
+        <div class="mkt-feature">
+            <div class="ic">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>
+            </div>
+            <h3>@Loc.T("mkt.feature3.title")</h3>
+            <p>@Loc.T("mkt.feature3.desc")</p>
+        </div>
+    </div>
+</section>
+
+<section id="how" class="mkt-section mkt-section-alt">
+    <div class="mkt-inner">
+        <h2>@Loc.T("mkt.how.title")</h2>
+        <p class="lead">@Loc.T("mkt.how.lead")</p>
+        <div class="mkt-steps">
+            <div class="mkt-step">
+                <div class="num">1</div>
+                <h3>@Loc.T("mkt.step1.title")</h3>
+                <p>@Loc.T("mkt.step1.desc")</p>
+            </div>
+            <div class="mkt-step">
+                <div class="num">2</div>
+                <h3>@Loc.T("mkt.step2.title")</h3>
+                <p>@Loc.T("mkt.step2.desc")</p>
+            </div>
+            <div class="mkt-step">
+                <div class="num">3</div>
+                <h3>@Loc.T("mkt.step3.title")</h3>
+                <p>@Loc.T("mkt.step3.desc")</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="mkt-cta-band">
+    <h2>@Loc.T("mkt.cta.title")</h2>
+    <p>@Loc.T("mkt.cta.subtitle")</p>
+    <AuthLink Href="/Signup" Class="mkt-btn mkt-btn-primary mkt-btn-lg">@Loc.T("mkt.cta.button")</AuthLink>
+</section>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await Loc.EnsureLoadedAsync();
+        Loc.OnChange += OnLocalizationChanged;
+    }
+
+    private void OnLocalizationChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Loc.OnChange -= OnLocalizationChanged;
+}

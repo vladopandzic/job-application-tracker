@@ -1,0 +1,218 @@
+/* ===== JobTrek auth pages (login / signup) ===== */
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: #0F172A;
+    background: #F7F8FA;
+}
+
+a { text-decoration: none; }
+
+.auth-wrap {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+}
+
+/* ---- Brand side ---- */
+.auth-brand {
+    position: relative;
+    overflow: hidden;
+    padding: 48px 56px;
+    color: #fff;
+    background:
+        radial-gradient(700px 400px at 100% 0%, rgba(255, 255, 255, 0.14), transparent 60%),
+        linear-gradient(135deg, #4F46E5, #7C3AED);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.auth-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+}
+
+.auth-logo-mark {
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.9);
+    display: inline-block;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+.auth-brand-copy { max-width: 460px; }
+
+.auth-brand-copy h1 {
+    font-size: clamp(30px, 3.6vw, 46px);
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    font-weight: 800;
+    margin: 0 0 14px;
+}
+
+.auth-brand-copy > p {
+    font-size: 18px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.86);
+    margin: 0 0 28px;
+}
+
+.auth-points { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.auth-points li {
+    position: relative;
+    padding-left: 30px;
+    font-size: 15.5px;
+    color: rgba(255, 255, 255, 0.95);
+}
+.auth-points li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    top: -1px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.22);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+}
+
+.auth-brand-foot { font-size: 13px; color: rgba(255, 255, 255, 0.7); }
+
+/* ---- Form side ---- */
+.auth-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 32px;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 420px;
+}
+
+.auth-card h2 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0 0 6px;
+}
+
+.auth-sub {
+    color: #64748B;
+    font-size: 15px;
+    margin: 0 0 28px;
+}
+
+.auth-form { display: flex; flex-direction: column; }
+
+.auth-form label {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #374151;
+    margin: 14px 0 6px;
+}
+
+.auth-input {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-family: inherit;
+    color: #0F172A;
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.auth-input::placeholder { color: #9CA3AF; }
+
+.auth-input:focus {
+    border-color: #4F46E5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.18);
+}
+
+.auth-btn {
+    margin-top: 24px;
+    width: 100%;
+    padding: 13px 18px;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: inherit;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #4F46E5, #7C3AED);
+    box-shadow: 0 8px 22px rgba(79, 70, 229, 0.30);
+    transition: box-shadow .2s ease, transform .05s ease;
+}
+
+.auth-btn:hover { box-shadow: 0 12px 30px rgba(79, 70, 229, 0.42); }
+.auth-btn:active { transform: translateY(1px); }
+
+.auth-error {
+    color: #DC2626;
+    font-size: 13px;
+    margin-top: 6px;
+    display: block;
+}
+.auth-error:empty { display: none; }
+
+.auth-note {
+    background: rgba(22, 163, 74, 0.10);
+    color: #15803D;
+    border: 1px solid rgba(22, 163, 74, 0.25);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    margin-bottom: 18px;
+}
+
+.auth-alt {
+    text-align: center;
+    margin-top: 22px;
+    font-size: 14.5px;
+    color: #64748B;
+}
+.auth-alt a { color: #4F46E5; font-weight: 600; }
+.auth-alt a:hover { text-decoration: underline; }
+
+/* Compact brand shown at the top of the form on mobile (the full brand panel is hidden there),
+   so the login/signup page still has identity instead of being a bare form. */
+.auth-mobile-brand { display: none; }
+
+/* ---- Responsive ---- */
+@media (max-width: 900px) {
+    .auth-wrap { grid-template-columns: 1fr; }
+    .auth-brand { display: none; }
+    .auth-panel { padding: 32px 24px 40px; }
+
+    .auth-mobile-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        font-weight: 800;
+        font-size: 20px;
+        letter-spacing: -0.02em;
+        color: #0F172A;
+        margin-bottom: 22px;
+    }
+
+    .auth-mobile-brand .auth-logo-mark {
+        width: 26px;
+        height: 26px;
+        background: linear-gradient(135deg, #4F46E5, #7C3AED);
+        box-shadow: 0 6px 18px rgba(79, 70, 229, 0.28);
+    }
+}

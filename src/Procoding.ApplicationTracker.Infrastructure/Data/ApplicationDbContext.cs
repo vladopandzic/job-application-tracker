@@ -30,6 +30,8 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
 
     public DbSet<RefreshToken> RefreshTokens { get; set; }
 
+    public DbSet<Translation> Translations { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());

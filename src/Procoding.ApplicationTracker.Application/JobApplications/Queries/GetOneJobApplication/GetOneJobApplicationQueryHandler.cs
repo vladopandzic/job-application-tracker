@@ -40,7 +40,14 @@ internal sealed class GetOneJobApplicationQueryHandler : IQueryHandler<GetOneJob
                                                       jobAdLink: jobApplication.JobAdLink.Value,
                                                       workLocationType: workLocationDto,
                                                       jobType: jobType,
-                                                      description: jobApplication.Description);
+                                                      description: jobApplication.Description,
+                                                      status: jobApplication.JobApplicationStatus.ToString());
+
+        jobApplicationDto.InterviewSteps = jobApplication.InterviewSteps
+            .Where(s => s.DeletedOnUtc == null)
+            .OrderBy(s => s.OccurredOn)
+            .Select(s => new InterviewStepDTO(s.Id, s.Type.ToString(), s.OccurredOn, s.Outcome.ToString(), s.Notes))
+            .ToList();
 
         return new JobApplicationResponseDTO(jobApplicationDto);
     }

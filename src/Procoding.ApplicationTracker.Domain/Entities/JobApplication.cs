@@ -92,21 +92,77 @@ public sealed class JobApplication : AggregateRoot, ISoftDeletableEntity, IAudit
     }
 
     /// <summary>
-    /// Creates new interview for job application.
+    /// Changes the status of the job application. Any status can move to any other status (the board
+    /// lets the candidate freely re-organize their applications). Changing to the current status is a no-op.
     /// </summary>
-    /// <param name="id"></param>
-    /// <param name="description"></param>
-    /// <param name="inteviewStepType"></param>
-    /// <returns></returns>
-    public InterviewStep CreateNewInterview(Guid id, string description, InterviewStepType inteviewStepType)
+    /// <param name="newStatus">The status to move to.</param>
+    /// <returns>This job application.</returns>
+    public JobApplication ChangeStatus(JobApplicationStatus newStatus)
     {
-        var interview = new InterviewStep(jobApplication: this, id: id, description: description, inteviewStepType: inteviewStepType);
+        if (JobApplicationStatus == newStatus)
+        {
+            return this;
+        }
 
-        _interviewSteps.Add(interview);
+        var oldStatus = JobApplicationStatus;
+        JobApplicationStatus = newStatus;
 
-        this.AddDomainEvent(new NewInterviewAddedDomainEvent(interview));
+        AddDomainEvent(new JobApplicationStatusChangedDomainEvent(Id, oldStatus, newStatus));
 
-        return interview;
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a new step to the interview process of this job application (e.g. a phone screen or a
+    /// technical interview) with its outcome and optional notes.
+    /// </summary>
+    /// <param name="id">Id of the interview step.</param>
+    /// <param name="type">Type of the step.</param>
+    /// <param name="occurredOn">When the step took place or is scheduled.</param>
+    /// <param name="outcome">Outcome of the step.</param>
+    /// <param name="notes">Optional free-text notes / comment.</param>
+    /// <returns>The created interview step.</returns>
+    public InterviewStep AddInterviewStep(Guid id,
+                                          InterviewStepType type,
+                                          DateTime occurredOn,
+                                          InterviewStepOutcome outcome,
+                                          string? notes)
+    {
+        var interviewStep = new InterviewStep(jobApplication: this, id: id, type: type, occurredOn: occurredOn, outcome: outcome, notes: notes);
+
+        _interviewSteps.Add(interviewStep);
+
+        AddDomainEvent(new NewInterviewAddedDomainEvent(interviewStep));
+
+        return interviewStep;
+    }
+
+    /// <summary>
+    /// Updates an existing interview step. No-op if the step does not exist.
+    /// </summary>
+    public void UpdateInterviewStep(Guid interviewStepId,
+                                    InterviewStepType type,
+                                    DateTime occurredOn,
+                                    InterviewStepOutcome outcome,
+                                    string? notes)
+    {
+        var interviewStep = _interviewSteps.FirstOrDefault(x => x.Id == interviewStepId);
+
+        interviewStep?.Update(type, occurredOn, outcome, notes);
+    }
+
+    /// <summary>
+    /// Removes an interview step from this job application. No-op if the step does not exist.
+    /// </summary>
+    /// <param name="interviewStepId">Id of the interview step to remove.</param>
+    public void RemoveInterviewStep(Guid interviewStepId)
+    {
+        var interviewStep = _interviewSteps.FirstOrDefault(x => x.Id == interviewStepId);
+
+        if (interviewStep is not null)
+        {
+            _interviewSteps.Remove(interviewStep);
+        }
     }
 
     public JobApplication Update(Company company,
@@ -152,7 +208,7 @@ public sealed class JobApplication : AggregateRoot, ISoftDeletableEntity, IAudit
     /// <summary>
     /// Current job application status.
     /// </summary>
-    public JobApplicationStatus JobApplicationStatus { get; }
+    public JobApplicationStatus JobApplicationStatus { get; private set; }
 
     /// <summary>
     /// Job type like <see cref="JobType.FullTime"/> or <see cref="JobType.PartTime"/>.

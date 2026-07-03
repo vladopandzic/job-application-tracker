@@ -2,12 +2,13 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using Procoding.ApplicationTracker.DTOs.Model;
+using Procoding.ApplicationTracker.Web.Localization;
 using Procoding.ApplicationTracker.Web.ViewModels.JobApplications;
 
 namespace Procoding.ApplicationTracker.Web.Pages.JobApplication;
 
 [Authorize]
-public partial class MyJobApplicationPage
+public partial class MyJobApplicationPage : IDisposable
 {
     [Inject]
     public MyJobApplicationViewModel ViewModel { get; set; } = default!;
@@ -18,8 +19,22 @@ public partial class MyJobApplicationPage
     [Inject]
     public IDialogService DialogService { get; set; } = default!;
 
+    [Inject]
+    public LocalizationService Loc { get; set; } = default!;
+
     [Parameter]
     public string Id { get; set; }
+
+    // Fixed-choice fields are MudSelects; their DTOs use reference equality, so compare by value/id
+    // for the selected item to match a list item.
+    private static readonly IEqualityComparer<WorkLocationTypeDTO> WorkLocationComparer =
+        EqualityComparer<WorkLocationTypeDTO>.Create((a, b) => string.Equals(a?.Value, b?.Value, StringComparison.Ordinal), x => x.Value?.GetHashCode() ?? 0);
+
+    private static readonly IEqualityComparer<JobTypeDTO> JobTypeComparer =
+        EqualityComparer<JobTypeDTO>.Create((a, b) => string.Equals(a?.Value, b?.Value, StringComparison.Ordinal), x => x.Value?.GetHashCode() ?? 0);
+
+    private static readonly IEqualityComparer<JobApplicationSourceDTO> SourceComparer =
+        EqualityComparer<JobApplicationSourceDTO>.Create((a, b) => a?.Id == b?.Id, x => x.Id.GetHashCode());
 
     protected MudForm? mudForm;
 
@@ -48,6 +63,9 @@ public partial class MyJobApplicationPage
 
     protected override async Task OnInitializedAsync()
     {
+        await Loc.EnsureLoadedAsync();
+        Loc.OnChange += OnLocalizationChanged;
+
         if (Id == "new")
         {
             await ViewModel.InitializeViewModel(null);
@@ -58,6 +76,10 @@ public partial class MyJobApplicationPage
         }
         await base.OnInitializedAsync();
     }
+
+    private void OnLocalizationChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Loc.OnChange -= OnLocalizationChanged;
 
     private async Task SaveNewCompany()
     {
@@ -73,8 +95,17 @@ public partial class MyJobApplicationPage
     protected async Task OnSubmit()
     {
         await mudForm!.Validate();
+
+        if (!mudForm.IsValid)
+        {
+            return;
+        }
+
         await ViewModel.SaveAsync();
+        ViewModel.EditDetailsDialogVisible = false;
     }
+
+    private void OpenEditDetails() => ViewModel.EditDetailsDialogVisible = true;
 
     private string CompaniesToStringFunc(CompanyDTO company)
     {
@@ -93,11 +124,11 @@ public partial class MyJobApplicationPage
 
     private string JobTypeToStringFunc(JobTypeDTO jobType)
     {
-        return jobType != null ? jobType.Value : "";
+        return jobType != null ? Loc.TValue("jobType", jobType.Value) : "";
     }
     private string WorkLocationToStringFunc(WorkLocationTypeDTO workLocation)
     {
-        return workLocation != null ? workLocation.Value : "";
+        return workLocation != null ? Loc.TValue("workLocation", workLocation.Value) : "";
     }
 
 
@@ -143,9 +174,116 @@ public partial class MyJobApplicationPage
     }
 
 
-    private void OpenCreateNewCompanyDialog()
+    private async Task OpenCreateNewCompanyDialog()
     {
+        // Close the autocomplete dropdown first — otherwise its popover (higher z-index) covers the dialog.
+        if (mudCompanyAutocomplete is not null)
+        {
+            await mudCompanyAutocomplete.BlurAsync();
+        }
+
         ViewModel.CreateNewCompanyDialogVisible = true;
     }
 
+    private string CompanyInitial
+    {
+        get
+        {
+            var name = ViewModel.JobApplication?.Company?.CompanyName;
+            return string.IsNullOrWhiteSpace(name) ? "?" : name.Trim()[..1].ToUpperInvariant();
+        }
+    }
+
+    private string HeaderTitle
+    {
+        get
+        {
+            var ja = ViewModel.JobApplication;
+            if (ja is null || ja.Id == Guid.Empty)
+            {
+                return Loc.T("detail.newApplication");
+            }
+            return string.IsNullOrWhiteSpace(ja.JobPositionTitle) ? Loc.T("detail.jobApplication") : ja.JobPositionTitle;
+        }
+    }
+
+    private string HeaderSubtitle
+    {
+        get
+        {
+            var ja = ViewModel.JobApplication;
+            if (ja is null || ja.Id == Guid.Empty)
+            {
+                return Loc.T("detail.fillDetailsSave");
+            }
+
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(ja.Company?.CompanyName)) parts.Add(ja.Company.CompanyName);
+            if (!string.IsNullOrWhiteSpace(ja.ApplicationSource?.Name)) parts.Add(ja.ApplicationSource.Name);
+            if (!string.IsNullOrWhiteSpace(ja.WorkLocationType?.Value)) parts.Add(Loc.TValue("workLocation", ja.WorkLocationType.Value));
+            return string.Join(" · ", parts);
+        }
+    }
+
+    private static Color StatusColor(string status) => status switch
+    {
+        "Applied" => Color.Info,
+        "InProcess" => Color.Warning,
+        "Offer" => Color.Secondary,
+        "Accepted" => Color.Success,
+        "Rejected" => Color.Error,
+        _ => Color.Default
+    };
+
+    private static string StatusKey(string status) => status switch
+    {
+        "Applied" => "status.applied",
+        "InProcess" => "status.inProcess",
+        "Offer" => "status.offer",
+        "Accepted" => "status.accepted",
+        "Rejected" => "status.rejected",
+        "Withdrawed" => "status.withdrawed",
+        _ => status
+    };
+
+    private static readonly string[] AllStatuses = { "Applied", "InProcess", "Offer", "Accepted", "Rejected", "Withdrawed" };
+
+    private async Task ChangeStatus(string? newStatus)
+    {
+        if (string.IsNullOrEmpty(newStatus))
+        {
+            return;
+        }
+
+        var ok = await ViewModel.ChangeStatusAsync(newStatus);
+
+        if (ok)
+        {
+            Snackbar.Add($"Status: {Loc.T(StatusKey(newStatus))}", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("Promjena statusa nije uspjela.", Severity.Error);
+        }
+
+        StateHasChanged();
+    }
+
+    private void OpenAddStep() => ViewModel.OpenAddStep();
+
+    private void OpenEditStep(InterviewStepDTO step) => ViewModel.OpenEditStep(step);
+
+    private async Task SaveStep() => await ViewModel.SaveStepAsync();
+
+    private async Task DeleteInterviewStep(Guid interviewStepId)
+    {
+        await ViewModel.DeleteInterviewStepAsync(interviewStepId);
+    }
+
+    private static Color OutcomeColor(string outcome) => outcome switch
+    {
+        "Passed" => Color.Success,
+        "Failed" => Color.Error,
+        _ => Color.Warning
+    };
 }

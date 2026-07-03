@@ -1,0 +1,218 @@
+@page "/my-job-applications/board"
+@using MudBlazor
+@using Procoding.ApplicationTracker.DTOs.Model
+@using Procoding.ApplicationTracker.Web.Localization
+@attribute [Authorize]
+
+<style>
+    .kanban-dragging {
+        opacity: .9;
+        transform: rotate(2deg);
+        box-shadow: 0 14px 34px rgba(15, 23, 42, .28) !important;
+        cursor: grabbing !important;
+    }
+
+    .kanban-zone-active {
+        outline: 2px dashed var(--mud-palette-primary);
+        outline-offset: 3px;
+        background: rgba(79, 70, 229, .07) !important;
+        border-radius: 12px;
+        transition: background .15s ease;
+    }
+
+    .kanban-card:active { cursor: grabbing; }
+
+    /* Desktop drag-and-drop board grows with content; the PAGE (not the board) does the scrolling,
+       so the column headers can stay sticky to the viewport and the page gets taller as columns fill.
+       (Making the board itself a scroll container with overflow breaks both: sticky sticks to the
+       board instead of the viewport, and the board scrolls internally instead of the page.) */
+    .kanban-board {
+        align-items: stretch;
+        overflow: visible;
+    }
+
+    /* Keep chips inside their card: the job-type / location / step chips wrap their text and never
+       exceed the card width instead of spilling past the column border. */
+    .kanban-board .mud-chip,
+    .kanban-mobile .mud-chip {
+        height: auto;
+        min-height: 24px;
+        max-width: 100%;
+    }
+
+    .kanban-board .mud-chip .mud-chip-content,
+    .kanban-mobile .mud-chip .mud-chip-content {
+        white-space: normal;
+        line-height: 1.25;
+        padding-top: 3px;
+        padding-bottom: 3px;
+    }
+
+    /* Column header stays visible while scrolling a long column. */
+    .kanban-col-header {
+        position: sticky;
+        top: var(--mud-appbar-height, 64px);
+        z-index: 3;
+        background: var(--mud-palette-background-grey);
+        margin: -12px -12px 8px -12px;
+        padding: 12px 12px 8px 12px;
+        border-radius: 10px 10px 0 0;
+    }
+
+    /* Native status picker on mobile cards — the OS dropdown is 100% reliable on touch (no popover
+       positioning issues inside the horizontal carousel). Shows the current status; changing it moves the card. */
+    .jf-move-label {
+        font-size: 11px;
+        color: var(--mud-palette-text-secondary);
+        white-space: nowrap;
+    }
+
+    .jf-status-select {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 6px 8px;
+        border: 1px solid var(--mud-palette-lines-default);
+        border-radius: 8px;
+        background: var(--mud-palette-surface);
+        color: var(--mud-palette-text-primary);
+        max-width: 52%;
+    }
+
+    /* The mobile board is a separate, plain (no MudDropContainer) horizontal-swipe carousel.
+       MudDropContainer captures touchmove for its drag, which blocks native scrolling — so on
+       phones we swap it out for this read-only board that pans smoothly like Android pages. */
+    .kanban-mobile { display: none; }
+
+    @@media (max-width: 700px) {
+        .kanban-desktop { display: none; }
+
+        .kanban-mobile {
+            display: flex;
+            flex-direction: row;
+            gap: 14px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            padding: 2px 2px 12px;
+        }
+
+        .kanban-mcol {
+            flex: 0 0 86%;
+            scroll-snap-align: center;
+            scroll-snap-stop: always;
+            background: var(--mud-palette-background-grey);
+            border-radius: 12px;
+            padding: 12px;
+        }
+    }
+</style>
+
+<MudStack Row AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-4">
+    <MudText Typo="Typo.h5" Style="font-weight:600">@Loc.T("board.title")</MudText>
+    <MudSpacer />
+    <MudButton Href="my-job-applications" StartIcon="@Icons.Material.Outlined.ViewList" Variant="Variant.Outlined" Color="Color.Primary" Class="mr-2">@Loc.T("board.listView")</MudButton>
+    <MudButton Href="my-job-applications/new" StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary">@Loc.T("common.newApplication")</MudButton>
+</MudStack>
+
+@if (ViewModel.IsLoading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <div class="kanban-desktop">
+        <MudDropContainer T="JobApplicationDTO"
+                          @ref="_dropContainer"
+                          Items="ViewModel.JobApplications"
+                          ItemsSelector="@((item, dropzone) => item.Status == dropzone)"
+                          ItemDropped="OnItemDropped"
+                          ItemDraggingClass="kanban-dragging"
+                          CanDropClass="kanban-zone-active"
+                          ApplyDropClassesOnDragStarted="true"
+                          Class="d-flex flex-row align-stretch gap-4 pa-1 kanban-board">
+            <ChildContent>
+                @foreach (var column in Columns)
+                {
+                    <MudPaper Elevation="0" Class="pa-3 kanban-col" Style="flex:1 1 0; min-width:168px; background:var(--mud-palette-background-grey);">
+                        <div class="d-flex align-center kanban-col-header">
+                            <MudChip Color="column.Color" Size="Size.Small" Variant="Variant.Filled">@Loc.T(column.TranslationKey)</MudChip>
+                            <MudSpacer />
+                            <MudText Typo="Typo.caption">@ViewModel.JobApplications.Count(x => x.Status == column.Status)</MudText>
+                        </div>
+                        <MudDropZone T="JobApplicationDTO" Identifier="@column.Status" AllowReorder="false" Class="mud-height-full" Style="min-height:120px;" />
+                    </MudPaper>
+                }
+            </ChildContent>
+            <ItemRenderer>
+                <MudCard Class="mb-3 kanban-card" Elevation="2" Style="cursor:grab;">
+                    <MudCardContent Class="pa-3">
+                        <MudText Typo="Typo.body1" Style="font-weight:600">@context.JobPositionTitle</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">@context.Company?.CompanyName</MudText>
+                        <MudStack Row Spacing="1" Wrap="Wrap.Wrap" Class="mt-2">
+                            <MudChip Size="Size.Small" Variant="Variant.Outlined">@Loc.TValue("jobType", context.JobType?.Value)</MudChip>
+                            <MudChip Size="Size.Small" Variant="Variant.Outlined">@Loc.TValue("workLocation", context.WorkLocationType?.Value)</MudChip>
+                        </MudStack>
+                        @{
+                            var latestStep = context.InterviewSteps?.OrderBy(s => s.OccurredOn).LastOrDefault();
+                        }
+                        @if (latestStep is not null)
+                        {
+                            <div class="mt-2 d-flex align-center">
+                                <MudIcon Icon="@Icons.Material.Outlined.Timeline" Size="Size.Small" Color="Color.Primary" Class="mr-1" />
+                                <MudChip Size="Size.Small" Variant="Variant.Filled" Color="@OutcomeColor(latestStep.Outcome)">@Loc.TValue("stepType", latestStep.Type)</MudChip>
+                            </div>
+                        }
+                        <MudLink Href="@($"my-job-applications/{context.Id}")" Typo="Typo.caption" Class="mt-2">@Loc.T("common.details")</MudLink>
+                    </MudCardContent>
+                </MudCard>
+            </ItemRenderer>
+        </MudDropContainer>
+    </div>
+
+    <div class="kanban-mobile">
+        @foreach (var column in Columns)
+        {
+            var items = ViewModel.JobApplications.Where(x => x.Status == column.Status).ToList();
+            <div class="kanban-mcol">
+                <div class="d-flex align-center mb-3">
+                    <MudChip Color="column.Color" Size="Size.Small" Variant="Variant.Filled">@Loc.T(column.TranslationKey)</MudChip>
+                    <MudSpacer />
+                    <MudText Typo="Typo.caption">@items.Count</MudText>
+                </div>
+
+                @foreach (var app in items)
+                {
+                    var latestStep = app.InterviewSteps?.OrderBy(s => s.OccurredOn).LastOrDefault();
+                    <MudCard Class="mb-3" Elevation="2">
+                        <MudCardContent Class="pa-3">
+                            <MudText Typo="Typo.body1" Style="font-weight:600">@app.JobPositionTitle</MudText>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">@app.Company?.CompanyName</MudText>
+                            <MudStack Row Spacing="1" Wrap="Wrap.Wrap" Class="mt-2">
+                                <MudChip Size="Size.Small" Variant="Variant.Outlined">@Loc.TValue("jobType", app.JobType?.Value)</MudChip>
+                                <MudChip Size="Size.Small" Variant="Variant.Outlined">@Loc.TValue("workLocation", app.WorkLocationType?.Value)</MudChip>
+                            </MudStack>
+                            @if (latestStep is not null)
+                            {
+                                <div class="mt-2 d-flex align-center">
+                                    <MudIcon Icon="@Icons.Material.Outlined.Timeline" Size="Size.Small" Color="Color.Primary" Class="mr-1" />
+                                    <MudChip Size="Size.Small" Variant="Variant.Filled" Color="@OutcomeColor(latestStep.Outcome)">@Loc.TValue("stepType", latestStep.Type)</MudChip>
+                                </div>
+                            }
+                            <div class="d-flex align-center mt-2" style="gap:8px;">
+                                <MudLink Href="@($"my-job-applications/{app.Id}")" Typo="Typo.caption">@Loc.T("common.details")</MudLink>
+                                <MudSpacer />
+                                <label class="jf-move-label">@Loc.T("board.move")</label>
+                                <select class="jf-status-select" @onchange="@(e => MoveTo(app, e.Value?.ToString()))">
+                                    @foreach (var col in Columns)
+                                    {
+                                        <option value="@col.Status" selected="@(col.Status == app.Status)">@Loc.T(col.TranslationKey)</option>
+                                    }
+                                </select>
+                            </div>
+                        </MudCardContent>
+                    </MudCard>
+                }
+            </div>
+        }
+    </div>
+}

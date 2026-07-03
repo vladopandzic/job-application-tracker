@@ -34,9 +34,36 @@ public class MyJobApplicationViewModel : EditViewModelBase
 
     public bool CreateNewCompanyDialogVisible { get; set; }
 
+    /// <summary>Controls the "edit application details" dialog (the form).</summary>
+    public bool EditDetailsDialogVisible { get; set; }
+
     public CompanyDTO NewCompany { get; set; } = default!;
 
     public string PageTitle { get; set; }
+
+    /// <summary>All selectable interview step types.</summary>
+    public static readonly string[] StepTypes =
+    {
+        "Applied", "PhoneScreen", "TechnicalInterview", "TakeHomeTask", "SystemDesign", "Behavioral", "Final", "Offer", "Other"
+    };
+
+    /// <summary>All selectable interview step outcomes.</summary>
+    public static readonly string[] Outcomes = { "Pending", "Passed", "Failed" };
+
+    // Interview step add/edit dialog state.
+    public bool StepDialogVisible { get; set; }
+
+    public Guid? EditingStepId { get; set; }
+
+    public string StepType { get; set; } = "PhoneScreen";
+
+    public DateTime? StepDate { get; set; } = DateTime.Today;
+
+    public string StepOutcome { get; set; } = "Pending";
+
+    public string? StepNotes { get; set; }
+
+    public string StepDialogTitle => EditingStepId is null ? "Add step" : "Edit step";
 
     public MyJobApplicationViewModel(IJobApplicationService jobApplicationService,
                                      ICompanyService companyService,
@@ -83,6 +110,7 @@ public class MyJobApplicationViewModel : EditViewModelBase
                                                    jobType: new JobTypeDTO(""),
                                                    workLocationType: new WorkLocationTypeDTO(""),
                                                    description: null);
+            EditDetailsDialogVisible = true;
             SetPageTitle();
 
             return;
@@ -113,6 +141,9 @@ public class MyJobApplicationViewModel : EditViewModelBase
             return;
         }
         IsSaving = true;
+
+        // Prepend https:// when the user typed a scheme-less link so the stored URL is clickable.
+        JobApplication!.JobAdLink = Validators.FluentValidationExtensions.NormalizeUrl(JobApplication.JobAdLink);
 
         if (JobApplication!.Id == Guid.Empty)
         {
@@ -149,6 +180,27 @@ public class MyJobApplicationViewModel : EditViewModelBase
         IsSaving = false;
     }
 
+    /// <summary>Changes the application's status from the detail page (same command the board uses).</summary>
+    public async Task<bool> ChangeStatusAsync(string newStatus, CancellationToken cancellationToken = default)
+    {
+        if (JobApplication is null || JobApplication.Id == Guid.Empty || string.IsNullOrEmpty(newStatus) || newStatus == JobApplication.Status)
+        {
+            return false;
+        }
+
+        IsSaving = true;
+        var result = await _jobApplicationService.ChangeJobApplicationStatusAsync(
+            new JobApplicationChangeStatusRequestDTO(JobApplication.Id, newStatus), cancellationToken);
+        IsSaving = false;
+
+        if (result.IsSuccess)
+        {
+            JobApplication.Status = newStatus;
+        }
+
+        return result.IsSuccess;
+    }
+
     public async Task SaveNewCompany()
     {
         var isCompanyValid = (await CompanyValidator.ValidateAsync(NewCompany!)).IsValid;
@@ -158,6 +210,8 @@ public class MyJobApplicationViewModel : EditViewModelBase
         }
 
         IsSaving = true;
+
+        NewCompany!.OfficialWebSiteLink = Validators.FluentValidationExtensions.NormalizeUrl(NewCompany.OfficialWebSiteLink);
 
         if (NewCompany!.Id == Guid.Empty)
         {
@@ -218,5 +272,105 @@ public class MyJobApplicationViewModel : EditViewModelBase
         NewCompany = new CompanyDTO(Guid.Empty, "", "");
 
         CreateNewCompanyDialogVisible = true;
+    }
+
+    /// <summary>
+    /// Opens the dialog to add a new interview step.
+    /// </summary>
+    public void OpenAddStep()
+    {
+        EditingStepId = null;
+        StepType = "PhoneScreen";
+        StepDate = DateTime.Today;
+        StepOutcome = "Pending";
+        StepNotes = null;
+        StepDialogVisible = true;
+    }
+
+    /// <summary>
+    /// Opens the dialog to edit an existing interview step.
+    /// </summary>
+    public void OpenEditStep(InterviewStepDTO step)
+    {
+        EditingStepId = step.Id;
+        StepType = step.Type;
+        StepDate = step.OccurredOn;
+        StepOutcome = step.Outcome;
+        StepNotes = step.Notes;
+        StepDialogVisible = true;
+    }
+
+    /// <summary>
+    /// Saves the interview step dialog — adds a new step or updates the one being edited.
+    /// </summary>
+    public async Task SaveStepAsync(CancellationToken cancellationToken = default)
+    {
+        if (JobApplication is null || JobApplication.Id == Guid.Empty)
+        {
+            return;
+        }
+
+        IsSaving = true;
+
+        if (EditingStepId is null)
+        {
+            var result = await _jobApplicationService.AddInterviewStepAsync(
+                new AddInterviewStepRequestDTO(JobApplication.Id, StepType, StepDate ?? DateTime.Today, StepOutcome, StepNotes),
+                cancellationToken);
+
+            if (result.IsSuccess)
+            {
+                JobApplication.InterviewSteps.Add(result.Value.InterviewStep);
+                JobApplication.InterviewSteps = JobApplication.InterviewSteps.OrderBy(s => s.OccurredOn).ToList();
+                StepDialogVisible = false;
+            }
+
+            _notificationService.ShowMessageFromResult(result);
+        }
+        else
+        {
+            var result = await _jobApplicationService.UpdateInterviewStepAsync(
+                new UpdateInterviewStepRequestDTO(JobApplication.Id, EditingStepId.Value, StepType, StepDate ?? DateTime.Today, StepOutcome, StepNotes),
+                cancellationToken);
+
+            if (result.IsSuccess)
+            {
+                var index = JobApplication.InterviewSteps.FindIndex(s => s.Id == EditingStepId.Value);
+                if (index >= 0)
+                {
+                    JobApplication.InterviewSteps[index] = result.Value;
+                }
+                JobApplication.InterviewSteps = JobApplication.InterviewSteps.OrderBy(s => s.OccurredOn).ToList();
+                StepDialogVisible = false;
+            }
+
+            _notificationService.ShowMessageFromResult(result);
+        }
+
+        IsSaving = false;
+    }
+
+    /// <summary>
+    /// Deletes an interview step from the current job application.
+    /// </summary>
+    public async Task DeleteInterviewStepAsync(Guid interviewStepId, CancellationToken cancellationToken = default)
+    {
+        if (JobApplication is null || JobApplication.Id == Guid.Empty)
+        {
+            return;
+        }
+
+        IsSaving = true;
+
+        var result = await _jobApplicationService.DeleteInterviewStepAsync(JobApplication.Id, interviewStepId, cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            JobApplication.InterviewSteps = JobApplication.InterviewSteps.Where(s => s.Id != interviewStepId).ToList();
+        }
+
+        _notificationService.ShowMessageFromResult(result);
+
+        IsSaving = false;
     }
 }

@@ -1,0 +1,44 @@
+@page "/translations"
+@attribute [Authorize(Roles = "Employee")]
+@using MudBlazor
+@using Procoding.ApplicationTracker.Web.ViewModels.Translations
+
+<PageTitle>Translations · JobTrek</PageTitle>
+
+<div class="jf-page-header mb-4">
+    <div class="d-flex align-center" style="gap:16px;">
+        <MudIcon Icon="@Icons.Material.Outlined.Translate" Style="color:#fff;font-size:34px;" />
+        <div style="flex:1;min-width:0;">
+            <MudText Typo="Typo.h5" Style="font-weight:700;color:#fff;">Translations</MudText>
+            <MudText Typo="Typo.body2" Style="color:rgba(255,255,255,0.85);">Edit the UI text for Croatian and English.</MudText>
+        </div>
+    </div>
+</div>
+
+@if (ViewModel.IsLoading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <MudCard>
+        <MudCardContent>
+            <MudTable Items="ViewModel.Rows" Hover="true" Dense="true" Breakpoint="Breakpoint.None">
+                <HeaderContent>
+                    <MudTh>Key</MudTh>
+                    <MudTh>Hrvatski</MudTh>
+                    <MudTh>English</MudTh>
+                    <MudTh Style="width:60px;"></MudTh>
+                </HeaderContent>
+                <RowTemplate Context="row">
+                    <MudTd DataLabel="Key"><MudText Typo="Typo.body2" Style="font-family:monospace;">@row.Key</MudText></MudTd>
+                    <MudTd DataLabel="Hrvatski"><MudTextField @bind-Value="row.Hr" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudTd>
+                    <MudTd DataLabel="English"><MudTextField @bind-Value="row.En" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.Save" Color="Color.Primary" Disabled="ViewModel.IsSaving" OnClick="@(() => SaveRow(row))" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudCardContent>
+    </MudCard>
+}

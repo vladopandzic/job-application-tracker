@@ -34,6 +34,8 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IWorkLocationTypeRepository, WorkLocationTypeRepository>();
 
+        services.AddScoped<ITranslationRepository, TranslationRepository>();
+
         return services;
     }
 }

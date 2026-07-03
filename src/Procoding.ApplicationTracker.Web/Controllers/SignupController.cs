@@ -27,10 +27,12 @@ public class SignupController : Controller
         if (ModelState.IsValid)
         {
             var result = await _authService.SignupCandidate(model, cancellationToken);
-            if (!result.IsSuccess)
+            if (result.IsSuccess)
             {
-                ModelState.AddModelError(string.Empty, string.Join(Environment.NewLine, result.Errors.Select(x => x.Message)));
+                return Redirect("/Login?registered=1");
             }
+
+            ModelState.AddModelError(string.Empty, string.Join(Environment.NewLine, result.Errors.Select(x => x.Message)));
         }
         return View("Index", model);
     }

@@ -59,10 +59,11 @@ internal sealed class ApplyForJobCommandHandler : ICommandHandler<ApplyForJobCom
         var jobApplication = candidate.ApplyForAJob(company: company,
                                                     jobApplicationSource: jobApplicationSource,
                                                     timeProvider: _timeProvider,
-                                                    jobPositionTitle: "Senior .NET sw engineer",
-                                                    jobAdLink: new Link("https://www.link2.com"),
-                                                    workLocationType: WorkLocationType.Remote,
-                                                    jobType: JobType.FullTime);
+                                                    jobPositionTitle: request.JobPositionTitle,
+                                                    jobAdLink: new Link(request.JobAdLink),
+                                                    workLocationType: new WorkLocationType(request.WorkLocationType),
+                                                    jobType: new JobType(request.JobType),
+                                                    description: request.Description);
 
         await _jobApplicationRepository.InsertAsync(jobApplication, cancellationToken);
 
@@ -85,6 +86,7 @@ internal sealed class ApplyForJobCommandHandler : ICommandHandler<ApplyForJobCom
                                                                            jobAdLink: jobApplication.JobAdLink.Value,
                                                                            workLocationType: workLocationDto,
                                                                            jobType: jobType,
-                                                                           description: jobApplication.Description));
+                                                                           description: jobApplication.Description,
+                                                                           status: jobApplication.JobApplicationStatus.ToString()));
     }
 }

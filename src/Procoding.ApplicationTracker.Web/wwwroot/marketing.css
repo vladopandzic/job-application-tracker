@@ -1,0 +1,379 @@
+/* ===== JobTrek marketing / landing styles ===== */
+.mkt-root {
+    --mkt-indigo: #4F46E5;
+    --mkt-indigo-dark: #4338CA;
+    --mkt-violet: #7C3AED;
+    --mkt-ink: #0F172A;
+    --mkt-muted: #64748B;
+    --mkt-line: #E5E7EB;
+    --mkt-bg-soft: #F7F8FA;
+    font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: var(--mkt-ink);
+    background: #FFFFFF;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.mkt-root a { text-decoration: none; }
+
+/* ---- Nav ---- */
+.mkt-nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 16px 32px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: saturate(180%) blur(12px);
+    border-bottom: 1px solid var(--mkt-line);
+}
+
+.mkt-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+    font-size: 20px;
+    color: var(--mkt-ink);
+    letter-spacing: -0.02em;
+}
+
+.mkt-brand-mark {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--mkt-indigo), var(--mkt-violet));
+    display: inline-block;
+}
+
+.mkt-nav-links {
+    display: flex;
+    gap: 24px;
+    margin-left: 16px;
+}
+
+.mkt-nav-links a {
+    color: var(--mkt-muted);
+    font-weight: 500;
+    font-size: 15px;
+}
+
+.mkt-nav-links a:hover { color: var(--mkt-ink); }
+
+.mkt-nav-cta {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* ---- Language switcher ---- */
+.mkt-lang {
+    display: inline-flex;
+    border: 1px solid var(--mkt-line);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.mkt-lang-btn {
+    border: none;
+    background: transparent;
+    color: var(--mkt-muted);
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+}
+
+.mkt-lang-btn:hover {
+    color: var(--mkt-ink);
+}
+
+.mkt-lang-btn.active {
+    background: linear-gradient(135deg, var(--mkt-indigo), var(--mkt-violet));
+    color: #fff;
+}
+
+/* ---- Buttons ---- */
+.mkt-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 15px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    transition: transform .05s ease, box-shadow .2s ease, background .2s ease;
+    white-space: nowrap;
+}
+
+.mkt-btn-lg { padding: 14px 26px; font-size: 16px; }
+
+.mkt-btn-primary {
+    color: #fff;
+    background: linear-gradient(135deg, var(--mkt-indigo), var(--mkt-violet));
+    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.30);
+}
+
+.mkt-btn-primary:hover { box-shadow: 0 10px 28px rgba(79, 70, 229, 0.42); }
+.mkt-btn-primary:active { transform: translateY(1px); }
+
+.mkt-btn-ghost {
+    color: var(--mkt-ink);
+    background: transparent;
+    border: 1px solid var(--mkt-line);
+}
+
+.mkt-btn-ghost:hover { background: var(--mkt-bg-soft); }
+
+/* ---- Hero ---- */
+.mkt-hero {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(900px 500px at 80% -10%, rgba(124, 58, 237, 0.14), transparent 60%),
+        radial-gradient(700px 400px at 0% 0%, rgba(79, 70, 229, 0.12), transparent 55%),
+        #FFFFFF;
+}
+
+.mkt-hero-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 88px 32px 72px;
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 56px;
+    align-items: center;
+}
+
+.mkt-eyebrow {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--mkt-indigo);
+    background: rgba(79, 70, 229, 0.10);
+    padding: 6px 12px;
+    border-radius: 999px;
+    margin-bottom: 20px;
+}
+
+.mkt-hero-copy h1 {
+    font-size: clamp(34px, 5vw, 56px);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    font-weight: 800;
+    margin: 0 0 18px;
+}
+
+.mkt-hero-copy h1 .grad {
+    background: linear-gradient(135deg, var(--mkt-indigo), var(--mkt-violet));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.mkt-hero-copy p {
+    font-size: 19px;
+    line-height: 1.6;
+    color: var(--mkt-muted);
+    max-width: 540px;
+    margin: 0 0 28px;
+}
+
+.mkt-hero-cta { display: flex; gap: 14px; flex-wrap: wrap; }
+
+.mkt-hero-trust {
+    margin-top: 18px;
+    font-size: 14px;
+    color: var(--mkt-muted);
+}
+
+/* ---- Hero mock board ---- */
+.mkt-board {
+    background: #fff;
+    border: 1px solid var(--mkt-line);
+    border-radius: 16px;
+    box-shadow: 0 30px 60px rgba(15, 23, 42, 0.14);
+    padding: 16px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    transform: rotate(0.5deg);
+}
+
+.mkt-col-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--mkt-muted);
+    margin-bottom: 10px;
+}
+
+.mkt-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.mkt-dot.applied { background: #3B82F6; }
+.mkt-dot.progress { background: #F59E0B; }
+.mkt-dot.offer { background: #7C3AED; }
+
+.mkt-mini {
+    background: var(--mkt-bg-soft);
+    border: 1px solid var(--mkt-line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+}
+
+.mkt-mini b { font-size: 13px; font-weight: 700; display: block; }
+.mkt-mini span { font-size: 12px; color: var(--mkt-muted); }
+.mkt-mini .tag {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--mkt-indigo);
+    background: rgba(79, 70, 229, 0.10);
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+/* ---- Sections ---- */
+.mkt-section { max-width: 1180px; margin: 0 auto; padding: 84px 32px; }
+.mkt-section-alt { max-width: none; background: var(--mkt-bg-soft); border-top: 1px solid var(--mkt-line); border-bottom: 1px solid var(--mkt-line); }
+.mkt-section-alt .mkt-inner { max-width: 1180px; margin: 0 auto; }
+
+.mkt-section h2, .mkt-cta-band h2 {
+    font-size: clamp(26px, 3.4vw, 38px);
+    letter-spacing: -0.02em;
+    font-weight: 800;
+    text-align: center;
+    margin: 0 0 12px;
+}
+
+.mkt-section .lead {
+    text-align: center;
+    color: var(--mkt-muted);
+    font-size: 18px;
+    max-width: 620px;
+    margin: 0 auto 48px;
+}
+
+/* ---- Features ---- */
+.mkt-features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.mkt-feature {
+    background: #fff;
+    border: 1px solid var(--mkt-line);
+    border-radius: 16px;
+    padding: 28px;
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.mkt-feature:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(15, 23, 42, 0.10); }
+
+.mkt-feature .ic {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(124, 58, 237, 0.12));
+    color: var(--mkt-indigo);
+    margin-bottom: 16px;
+}
+
+.mkt-feature h3 { font-size: 18px; font-weight: 700; margin: 0 0 8px; }
+.mkt-feature p { font-size: 15px; color: var(--mkt-muted); line-height: 1.6; margin: 0; }
+
+/* ---- Steps ---- */
+.mkt-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.mkt-step { text-align: center; padding: 8px; }
+.mkt-step .num {
+    width: 44px; height: 44px; margin: 0 auto 14px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; color: #fff;
+    background: linear-gradient(135deg, var(--mkt-indigo), var(--mkt-violet));
+}
+.mkt-step h3 { font-size: 17px; font-weight: 700; margin: 0 0 6px; }
+.mkt-step p { font-size: 15px; color: var(--mkt-muted); line-height: 1.55; margin: 0; }
+
+/* ---- CTA band ---- */
+.mkt-cta-band {
+    text-align: center;
+    padding: 84px 32px;
+    background: linear-gradient(135deg, var(--mkt-indigo), var(--mkt-violet));
+    color: #fff;
+}
+.mkt-cta-band h2 { color: #fff; }
+.mkt-cta-band p { color: rgba(255, 255, 255, 0.85); font-size: 18px; margin: 0 0 28px; }
+.mkt-cta-band .mkt-btn-primary {
+    background: #fff; color: var(--mkt-indigo);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.20);
+}
+
+/* ---- Footer ---- */
+.mkt-footer {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    max-width: 1180px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 32px;
+    color: var(--mkt-muted);
+    font-size: 14px;
+}
+.mkt-footer-links { display: flex; gap: 20px; }
+.mkt-footer-links a { color: var(--mkt-muted); }
+.mkt-footer-links a:hover { color: var(--mkt-ink); }
+
+/* ---- Responsive ---- */
+.mkt-root { overflow-x: hidden; }
+
+@media (max-width: 900px) {
+    .mkt-hero-inner { grid-template-columns: 1fr; gap: 40px; padding: 48px 20px 56px; }
+    .mkt-hero-visual { order: 2; }
+    .mkt-features, .mkt-steps { grid-template-columns: 1fr; }
+    .mkt-nav-links { display: none; }
+    .mkt-section { padding: 56px 20px; }
+    .mkt-cta-band { padding: 56px 20px; }
+    .mkt-footer { padding: 24px 20px; }
+}
+
+@media (max-width: 600px) {
+    /* Nav: keep everything on one row but let it shrink instead of overflowing. */
+    .mkt-nav { gap: 8px; padding: 12px 14px; }
+    .mkt-brand { font-size: 18px; }
+    .mkt-nav-cta { gap: 8px; }
+    .mkt-lang-btn { padding: 6px 9px; }
+    .mkt-btn { padding: 8px 12px; font-size: 14px; }
+    /* Drop the secondary "Sign in" pill on tiny screens — the hero has its own. */
+    .mkt-nav-cta .mkt-btn-ghost { display: none; }
+
+    .mkt-hero-copy h1 { font-size: 32px; }
+    .mkt-hero-copy p { font-size: 16px; }
+    .mkt-hero-cta { flex-direction: column; align-items: stretch; }
+    .mkt-hero-cta .mkt-btn { width: 100%; }
+
+    /* Mock board: 3 tight columns get unreadable — stack to a single column. */
+    .mkt-board { grid-template-columns: 1fr; transform: none; }
+
+    .mkt-section h2, .mkt-cta-band h2 { font-size: 24px; }
+    .mkt-section .lead { font-size: 15px; }
+}

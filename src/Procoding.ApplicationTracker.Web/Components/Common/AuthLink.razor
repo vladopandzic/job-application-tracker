@@ -1,0 +1,15 @@
+@inject NavigationManager Nav
+
+@* A link that always does a real (full-page) browser navigation, so it can reach server-rendered
+   MVC endpoints (e.g. /Login, /Signup) instead of being swallowed by the interactive Blazor router. *@
+<a href="@Href" class="@Class" @onclick="Navigate" @onclick:preventDefault="true">@ChildContent</a>
+
+@code {
+    [Parameter] public string Href { get; set; } = "/";
+
+    [Parameter] public string? Class { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private void Navigate() => Nav.NavigateTo(Href, forceLoad: true);
+}

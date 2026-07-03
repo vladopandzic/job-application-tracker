@@ -21,6 +21,7 @@ internal sealed class JobApplicationRepository : IJobApplicationRepository
         return await _dbContext.JobApplications.Include(x => x.ApplicationSource)
                                                .Include(x => x.Company)
                                                .Include(x => x.Candidate)
+                                               .Include(x => x.InterviewSteps)
                                                .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 

@@ -1,64 +1,73 @@
-﻿@model Procoding.ApplicationTracker.DTOs.Request.Candidates.CandidateLoginRequestDTO;
-@using Procoding.ApplicationTracker.Web.Pages.Auth;
+@model Procoding.ApplicationTracker.DTOs.Request.Candidates.CandidateLoginRequestDTO;
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
 @{
-    ViewBag.Title = "Login";
+    Layout = null;
+
+    // Match the language the user picked in the app (mirrored into the jf-lang cookie). Default Croatian.
+    var hr = Context.Request.Cookies["jf-lang"] != "en";
+    ViewBag.Title = hr ? "Prijava" : "Sign in";
+
+    // Prefill demo credentials in the test/dev environment only.
+    var devEmail = Env.IsDevelopment() ? "demo@jobflow.app" : "";
+    var devPassword = Env.IsDevelopment() ? "Demo123!" : "";
 }
-<link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet" />
-<style>
-    /* Custom CSS to keep labels at the top */
-    .input-field label {
-        transform: translateY(-14px) scale(0.8);
-        transform-origin: left top 0px;
-        color: #9e9e9e; /* MaterializeCSS default grey text color */
-    }
-
-    .input-field input:focus + label,
-    .input-field input:valid + label {
-        color: #9e9e9e; /* MaterializeCSS default grey text color */
-    }
-</style>
-
-
-@using (Html.BeginForm("Login", "Login", FormMethod.Post))
-{
-    <div class="container">
-        <div class="row">
-            <div class="col s12 m6 offset-m3">
-                <div class="card">
-                    <div class="card-content">
-                        <span class="card-title">Login</span>
-
-                        @Html.AntiForgeryToken()
-                        @Html.ValidationSummary(true, "", new { @class = "red-text" })
-
-                        @if (ViewBag.Message != null)
-                        {
-                            <p class="red-text">@ViewBag.Message</p>
-                        }
-
-                        <div class="row">
-                            <div class="input-field col s12">
-                                @Html.LabelFor(x => x.Email, new { @class = "active" })
-                                @Html.TextBoxFor(a => a.Email, new { @class = "validate" })
-                                @Html.ValidationMessageFor(a => a.Email, "", new { @class = "red-text" })
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="input-field col s12">
-                                @Html.LabelFor(a => a.Password, new { @class = "active" })
-                                @Html.PasswordFor(a => a.Password, new { @class = "validate" })
-                                @Html.ValidationMessageFor(a => a.Password, "", new { @class = "red-text" })
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-action">
-                        <button type="submit" class="btn waves-effect waves-light  deep-purple">Login</button>
-                    </div>
-                </div>
+<!DOCTYPE html>
+<html lang="@(hr ? "hr" : "en")">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(hr ? "Prijava" : "Sign in") · JobTrek</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/auth.css?v=2" />
+</head>
+<body>
+    <div class="auth-wrap">
+        <aside class="auth-brand">
+            <a class="auth-logo" href="/"><span class="auth-logo-mark"></span> JobTrek</a>
+            <div class="auth-brand-copy">
+                <h1>@(hr ? "Dobro došao natrag." : "Welcome back.")</h1>
+                <p>@(hr ? "Nastavi točno ondje gdje si stao i drži svoju potragu za poslom u pokretu." : "Pick up right where you left off and keep your job search moving.")</p>
+                <ul class="auth-points">
+                    <li>@(hr ? "Vidi cijeli tijek na jednoj ploči" : "See your whole pipeline on one board")</li>
+                    <li>@(hr ? "Nijedna prijava ti neće promaknuti" : "Never lose track of an application")</li>
+                    <li>@(hr ? "Uvijek znaj što točno slijedi" : "Always know exactly what's next")</li>
+                </ul>
             </div>
-        </div>
-    </div>
-}
+            <div class="auth-brand-foot">© 2026 JobTrek</div>
+        </aside>
 
-<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+        <main class="auth-panel">
+            <div class="auth-card">
+                <a class="auth-mobile-brand" href="/"><span class="auth-logo-mark"></span> JobTrek</a>
+                <h2>@(hr ? "Prijava" : "Sign in")</h2>
+                <p class="auth-sub">@(hr ? "Unesi svoje podatke za pristup ploči." : "Enter your details to access your board.")</p>
+
+                @if (Context.Request.Query["registered"] == "1")
+                {
+                    <div class="auth-note">@(hr ? "Račun je kreiran — prijavi se." : "Account created — please sign in.")</div>
+                }
+
+                @using (Html.BeginForm("Login", "Login", FormMethod.Post, new { @class = "auth-form" }))
+                {
+                    @Html.AntiForgeryToken()
+                    @Html.ValidationSummary(true, "", new { @class = "auth-error" })
+
+                    <label for="Email">@(hr ? "Email" : "Email")</label>
+                    <input class="auth-input" type="email" name="Email" id="Email" value="@devEmail" placeholder="you@example.com" autofocus />
+                    @Html.ValidationMessageFor(a => a.Email, "", new { @class = "auth-error" })
+
+                    <label for="Password">@(hr ? "Lozinka" : "Password")</label>
+                    <input class="auth-input" type="password" name="Password" id="Password" value="@devPassword" placeholder="••••••••" />
+                    @Html.ValidationMessageFor(a => a.Password, "", new { @class = "auth-error" })
+
+                    <button type="submit" class="auth-btn">@(hr ? "Prijavi se" : "Sign in")</button>
+                }
+
+                <p class="auth-alt">@(hr ? "Nemaš račun?" : "Don't have an account?") <a href="/Signup">@(hr ? "Kreiraj ga besplatno" : "Create one for free")</a></p>
+                <p class="auth-alt">@(hr ? "Zaposlenik?" : "Staff member?") <a href="/admin/login">@(hr ? "Prijava za administratore" : "Admin sign in")</a></p>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

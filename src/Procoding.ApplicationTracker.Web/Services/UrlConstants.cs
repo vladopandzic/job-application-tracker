@@ -134,12 +134,32 @@ public static class UrlConstants
         {
             return $"{GET_ALL_URL}";
         }
+
+        public static string ChangeStatusUrl()
+        {
+            return $"{GET_ALL_URL}/status";
+        }
+
+        public static string InterviewStepsUrl()
+        {
+            return $"{GET_ALL_URL}/interview-steps";
+        }
+
+        public static string DeleteInterviewStepUrl(Guid jobApplicationId, Guid interviewStepId)
+        {
+            return $"{GET_ALL_URL}/{jobApplicationId}/interview-steps/{interviewStepId}";
+        }
     }
 
     public static class JobTypes
     {
         public const string GET_ALL_URL = "job-types";
 
+    }
+
+    public static class Translations
+    {
+        public const string GET_ALL_URL = "translations";
     }
 
     public static class WorkLocationTypes

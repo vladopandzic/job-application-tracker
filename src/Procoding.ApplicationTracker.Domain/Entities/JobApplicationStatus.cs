@@ -7,6 +7,8 @@ public enum JobApplicationStatus
 {
     Applied,
     InProcess,
+    Offer,
+    Accepted,
     Rejected,
     Withdrawed
 }
