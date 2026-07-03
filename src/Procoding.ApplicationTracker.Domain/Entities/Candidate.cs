@@ -198,14 +198,6 @@ public sealed class Candidate : IdentityUser<Guid>, ISoftDeletableEntity, IAudit
         return jobApplication;
     }
 
-    public void NewJobInterviewStep(JobApplication jobApplication, string description, InterviewStepType interviewStepType)
-    {
-        var interviewStep = jobApplication.CreateNewInterview(id: Guid.NewGuid(), description: description, inteviewStepType: interviewStepType);
-
-        //TODO: see where domain event should reside!
-    }
-
-
     /// <summary>
     /// Adds the specified <see cref="IDomainEvent"/> to the <see cref="IAggregateRoot"/>.
     /// </summary>

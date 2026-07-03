@@ -60,6 +60,44 @@ public class JobApplicationService : IJobApplicationService
         return await response.HandleResponseAsync<JobApplicationUpdatedResponseDTO>(cancellationToken);
     }
 
+    public async Task<Result<JobApplicationStatusChangedResponseDTO>> ChangeJobApplicationStatusAsync(JobApplicationChangeStatusRequestDTO request,
+                                                                                                     CancellationToken cancellationToken = default)
+    {
+        await Authorize();
+
+        var response = await _httpClient.PatchAsJsonAsync(UrlConstants.JobApplications.ChangeStatusUrl(), request, cancellationToken);
+
+        return await response.HandleResponseAsync<JobApplicationStatusChangedResponseDTO>(cancellationToken);
+    }
+
+    public async Task<Result<InterviewStepAddedResponseDTO>> AddInterviewStepAsync(AddInterviewStepRequestDTO request,
+                                                                                   CancellationToken cancellationToken = default)
+    {
+        await Authorize();
+
+        var response = await _httpClient.PostAsJsonAsync(UrlConstants.JobApplications.InterviewStepsUrl(), request, cancellationToken);
+
+        return await response.HandleResponseAsync<InterviewStepAddedResponseDTO>(cancellationToken);
+    }
+
+    public async Task<Result<Guid>> DeleteInterviewStepAsync(Guid jobApplicationId, Guid interviewStepId, CancellationToken cancellationToken = default)
+    {
+        await Authorize();
+
+        var response = await _httpClient.DeleteAsync(UrlConstants.JobApplications.DeleteInterviewStepUrl(jobApplicationId, interviewStepId), cancellationToken);
+
+        return await response.HandleResponseAsync<Guid>(cancellationToken);
+    }
+
+    public async Task<Result<DTOs.Model.InterviewStepDTO>> UpdateInterviewStepAsync(UpdateInterviewStepRequestDTO request, CancellationToken cancellationToken = default)
+    {
+        await Authorize();
+
+        var response = await _httpClient.PutAsJsonAsync(UrlConstants.JobApplications.InterviewStepsUrl(), request, cancellationToken);
+
+        return await response.HandleResponseAsync<DTOs.Model.InterviewStepDTO>(cancellationToken);
+    }
+
     private async Task Authorize()
     {
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await _tokenProvider.GetAccessTokenAsync());

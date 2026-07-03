@@ -97,6 +97,7 @@ internal sealed class UpdateJobApplicationCommandHandler : ICommandHandler<Updat
                                                                           jobAdLink: jobApplication.JobAdLink.Value,
                                                                           workLocationType: workLocationDto,
                                                                           jobType: jobTypeDto,
-                                                                          description: jobApplication.Description));
+                                                                          description: jobApplication.Description,
+                                                                          status: jobApplication.JobApplicationStatus.ToString()));
     }
 }

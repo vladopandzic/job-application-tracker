@@ -1,10 +1,11 @@
-﻿@page "/my-job-applications/{Id}"
+@page "/my-job-applications/{Id}"
 @using MudBlazor;
 
 @using Microsoft.AspNetCore.Components.Web;
 @using FluentValidation.Validators;
 @using Blazored.FluentValidation
 @using Procoding.ApplicationTracker.DTOs.Model
+@using Procoding.ApplicationTracker.Web.ViewModels.JobApplications
 <PageTitle>ViewModel.PageTitle</PageTitle>
 @if (ViewModel.IsLoading)
 {
@@ -13,88 +14,76 @@
 }
 else if (ViewModel.JobApplication is not null)
 {
-    <br />
-    <MudCard>
-        <MudToolBar>
-            <MudText Typo="Typo.h5" Style="font-weight:600">@ViewModel.PageTitle</MudText>
-        </MudToolBar>
-    </MudCard>
-    <br />
-    <MudCard>
-        <MudGrid>
-            <MudItem xs="12" sm="7">
-                <MudDialog IsVisible="ViewModel.CreateNewCompanyDialogVisible"
-                           IsVisibleChanged="(newValue)=>{ViewModel.CreateNewCompanyDialogVisible=newValue;}"
-                           ContentStyle="min-width:500px"
-                           Options="new DialogOptions(){CloseOnEscapeKey=true, CloseButton=true }"
-                           @ref="dialogRef">
-                    <TitleContent>
-                        <MudText Typo="Typo.h6">Create new company</MudText>
-
-                    </TitleContent>
-                    <DialogContent>
-
-                        <MudForm @ref=newNewCompanyForm Model="ViewModel.NewCompany" ValidationDelay="0" Validation="ViewModel.CompanyValidator.ValidateValue">
-
-                            <MudTextField @bind-Value=ViewModel.NewCompany.CompanyName
-                                          T="string"
-                                          Label="Name"
-                                          Validation="ViewModel.CompanyValidator.ValidateValue"
-                                          Immediate="true"
-                                          For="(()=>ViewModel.NewCompany.CompanyName)" />
-
-                            <MudTextField @bind-Value=ViewModel.NewCompany.OfficialWebSiteLink
-                                          T="string"
-                                          Label="Official website link"
-                                          Validation="ViewModel.CompanyValidator.ValidateValue"
-                                          Immediate="true"
-                                          For="(()=>ViewModel.NewCompany.OfficialWebSiteLink)" />
-
-                            <br />
-                            <SaveButton Disabled="ViewModel.IsSaving" IsSaving="ViewModel.IsSaving" OnClick="SaveNewCompany" />
-                        </MudForm>
-                    </DialogContent>
-
-                </MudDialog>
-
-                
-                <MudForm Class="pl-5" @ref=mudForm Model="ViewModel.JobApplication" ValidationDelay="0" Validation="ViewModel.Validator.ValidateValue">
+    <div class="jf-page-header mb-4">
+        <div class="d-flex align-center" style="gap:16px;">
+            <div class="jf-avatar">@CompanyInitial</div>
+            <div style="flex:1;min-width:0;">
+                <MudText Typo="Typo.h5" Style="font-weight:700;color:#fff;">@HeaderTitle</MudText>
+                <MudText Typo="Typo.body2" Style="color:rgba(255,255,255,0.85);">@HeaderSubtitle</MudText>
+            </div>
+            @if (ViewModel.JobApplication!.Id != Guid.Empty && !string.IsNullOrWhiteSpace(ViewModel.JobApplication.Status))
+            {
+                <select class="jf-status-select-header" @onchange="@(e => ChangeStatus(e.Value?.ToString()))" title="@Loc.T("board.move")">
+                    @foreach (var st in AllStatuses)
+                    {
+                        <option value="@st" selected="@(st == ViewModel.JobApplication.Status)">@Loc.T(StatusKey(st))</option>
+                    }
+                </select>
+            }
+            <MudButton OnClick="OpenEditDetails" Disabled="ViewModel.IsSaving" StartIcon="@Icons.Material.Filled.Edit" Variant="Variant.Filled" Style="background:#fff;color:#4F46E5;font-weight:600;">@(ViewModel.JobApplication!.Id == Guid.Empty ? Loc.T("detail.addDetails") : Loc.T("detail.editDetails"))</MudButton>
+        </div>
+    </div>
+    <MudDialog IsVisible="ViewModel.EditDetailsDialogVisible"
+               IsVisibleChanged="(v) => { ViewModel.EditDetailsDialogVisible = v; }"
+               Options="new DialogOptions(){ CloseOnEscapeKey = true, CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true }">
+        <TitleContent>
+            <MudText Typo="Typo.h6">@(ViewModel.JobApplication!.Id == Guid.Empty ? Loc.T("detail.newApplication") : Loc.T("detail.editDetails"))</MudText>
+        </TitleContent>
+        <DialogContent>
+                <MudForm @ref=mudForm Model="ViewModel.JobApplication" ValidationDelay="0" Validation="ViewModel.Validator.ValidateValue">
 
                     <MudTextField @bind-Value=ViewModel.JobApplication.JobPositionTitle
                                   Validation="ViewModel.Validator.ValidateValue"
                                   Immediate="true"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
                                   Clearable="true"
-                                  Placeholder="For example .NET developer"
+                                  Placeholder="@Loc.T("detail.egPosition")"
                                   For="(()=>ViewModel.JobApplication.JobPositionTitle)"
-                                  Label="Job position title" />
+                                  Label="@Loc.T("detail.jobPositionTitle")" />
 
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" sm="6">
                     <MudAutocomplete T="CompanyDTO"
                                      @ref=mudCompanyAutocomplete
-                                     Label="Company"
+                                     Label="@Loc.T("detail.company")"
                                      ResetValueOnEmptyText="true"
                                      @bind-Value="ViewModel.JobApplication.Company"
                                      For="(()=>ViewModel.JobApplication.Company)"
                                      ToStringFunc=CompaniesToStringFunc
                                      Validation="ViewModel.Validator.ValidateValue"
-                                     Placeholder="Choose from the list or add new"
+                                     Placeholder="@Loc.T("detail.chooseOrAdd")"
                                      Immediate="true"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
                                      MaxItems="100"
                                      Clearable="true"
-                                     Class="mt-5"
+                                     Class="mt-3"
                                      @bind-Text=ViewModel.NewCompany.CompanyName
                                      SearchFunc="SearchCompaniesFunc">
                         <NoItemsTemplate>
                             <MudAlert Severity="Severity.Info" Variant=Variant.Text ContentAlignment="HorizontalAlignment.Center">
 
-                                Company with that name does not exist. Would you like to create it?
+                                @Loc.T("detail.companyNotExist")
 
                             </MudAlert>
                             <div class="d-flex justify-center pa-5">
                                 <MudButton StartIcon="@Icons.Material.Outlined.Add"
                                            Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
                                            OnClick="OpenCreateNewCompanyDialog"
                                            Color="Color.Info">
-                                    Create new
+                                    @Loc.T("detail.createNew")
                                 </MudButton>
 
                             </div>
@@ -103,69 +92,251 @@ else if (ViewModel.JobApplication is not null)
 
                         </NoItemsTemplate>
                     </MudAutocomplete>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                    <MudSelect T="JobApplicationSourceDTO"
+                               Label="@Loc.T("detail.jobApplicationSource")"
+                               Class="mt-3"
+                               @bind-Value="ViewModel.JobApplication.ApplicationSource"
+                               For="(()=>ViewModel.JobApplication.ApplicationSource)"
+                               Validation="ViewModel.Validator.ValidateValue"
+                               Comparer="SourceComparer"
+                               ToStringFunc="JobApplicationSourcesToStringFunc"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Dense="true">
+                        @foreach (var s in ViewModel.JobApplicationSources)
+                        {
+                            <MudSelectItem T="JobApplicationSourceDTO" Value="s">@s.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                        </MudItem>
+                    </MudGrid>
 
-
-                    <MudAutocomplete T="JobApplicationSourceDTO"
-                                     Label="Job application source"
-                                     Class="mt-5"
-                                     ResetValueOnEmptyText="true"
-                                     @bind-Value="ViewModel.JobApplication.ApplicationSource"
-                                     For="(()=>ViewModel.JobApplication.ApplicationSource)"
-                                     ToStringFunc=JobApplicationSourcesToStringFunc
-                                     Validation="ViewModel.Validator.ValidateValue"
-                                     Immediate="true"
-                                     Clearable="true"
-                                     SearchFunc="SearchJobApplicationSourceFunc" />
-
-                    <MudAutocomplete T="WorkLocationTypeDTO"
-                                     Label="Work location type"
-                                     ResetValueOnEmptyText="true"
-                                     @bind-Value="ViewModel.JobApplication.WorkLocationType"
-                                     For="(()=>ViewModel.JobApplication.WorkLocationType)"
-                                     ToStringFunc=WorkLocationToStringFunc
-                                     Validation="ViewModel.Validator.ValidateValue"
-                                     Immediate="true"
-                                     Clearable="true"
-                                     Class="mt-5"
-                                     SearchFunc="SearchWorkLocationTypesFunc" />
-
-                    <MudAutocomplete T="JobTypeDTO"
-                                     Label="JobType"
-                                     ResetValueOnEmptyText="true"
-                                     @bind-Value="ViewModel.JobApplication.JobType"
-                                     For="(()=>ViewModel.JobApplication.JobType)"
-                                     ToStringFunc=JobTypeToStringFunc
-                                     Validation="ViewModel.Validator.ValidateValue"
-                                     Immediate="true"
-                                     Clearable="true"
-                                     Class="mt-5"
-                                     SearchFunc="SearchJobTypesFunc" />
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" sm="6">
+                    <MudSelect T="WorkLocationTypeDTO"
+                               Label="@Loc.T("detail.workLocation")"
+                               @bind-Value="ViewModel.JobApplication.WorkLocationType"
+                               For="(()=>ViewModel.JobApplication.WorkLocationType)"
+                               Validation="ViewModel.Validator.ValidateValue"
+                               Comparer="WorkLocationComparer"
+                               ToStringFunc="WorkLocationToStringFunc"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Class="mt-3"
+                               Dense="true">
+                        @foreach (var wl in ViewModel.WorkLocationTypes)
+                        {
+                            <MudSelectItem T="WorkLocationTypeDTO" Value="wl">@Loc.TValue("workLocation", wl.Value)</MudSelectItem>
+                        }
+                    </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                    <MudSelect T="JobTypeDTO"
+                               Label="@Loc.T("detail.jobType")"
+                               @bind-Value="ViewModel.JobApplication.JobType"
+                               For="(()=>ViewModel.JobApplication.JobType)"
+                               Validation="ViewModel.Validator.ValidateValue"
+                               Comparer="JobTypeComparer"
+                               ToStringFunc="JobTypeToStringFunc"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Class="mt-3"
+                               Dense="true">
+                        @foreach (var jt in ViewModel.JobTypes)
+                        {
+                            <MudSelectItem T="JobTypeDTO" Value="jt">@Loc.TValue("jobType", jt.Value)</MudSelectItem>
+                        }
+                    </MudSelect>
+                        </MudItem>
+                    </MudGrid>
 
                     <MudTextField @bind-Value=ViewModel.JobApplication.JobAdLink
                                   Validation="ViewModel.Validator.ValidateValue"
                                   For="(()=>ViewModel.JobApplication.JobAdLink)"
                                   Immediate="true"
-                                  Placeholder="Something like https://www.link.com"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Placeholder="@Loc.T("detail.egLink")"
                                   Clearable="true"
-                                  Class="mt-5"
-                                  Label="Job ad link" />
+                                  Class="mt-3"
+                                  Label="@Loc.T("detail.jobAdLink")" />
 
                     <MudTextField @bind-Value=ViewModel.JobApplication.Description
                                   Validation="ViewModel.Validator.ValidateValue"
                                   For="(()=>ViewModel.JobApplication.Description)"
                                   Immediate="true"
-                                  Class="mt-5"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Class="mt-3"
                                   Counter="500"
                                   Clearable="true"
                                   MaxLength="500"
                                   AutoGrow
                                   MaxLines="6"
-                                  Label="Description" />
-
-                    <SaveButton Disabled="ViewModel.IsSaving" IsSaving="ViewModel.IsSaving" OnClick="OnSubmit" />
+                                  Label="@Loc.T("detail.description")" />
 
                 </MudForm>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="@(() => ViewModel.EditDetailsDialogVisible = false)">@Loc.T("common.cancel")</MudButton>
+            <MudButton OnClick="OnSubmit" Disabled="ViewModel.IsSaving" Variant="Variant.Filled" Color="Color.Primary">@Loc.T("common.save")</MudButton>
+        </DialogActions>
+    </MudDialog>
+
+    <MudDialog IsVisible="ViewModel.CreateNewCompanyDialogVisible"
+               IsVisibleChanged="(newValue)=>{ViewModel.CreateNewCompanyDialogVisible=newValue;}"
+               Class="jf-create-company-dialog"
+               Options="new DialogOptions(){ CloseOnEscapeKey = true, CloseButton = true, MaxWidth = MaxWidth.ExtraSmall, FullWidth = true }"
+               @ref="dialogRef">
+        <TitleContent>
+            <MudText Typo="Typo.h6">@Loc.T("detail.createNewCompany")</MudText>
+        </TitleContent>
+        <DialogContent>
+            <MudForm @ref=newNewCompanyForm Model="ViewModel.NewCompany" ValidationDelay="0" Validation="ViewModel.CompanyValidator.ValidateValue">
+                <MudTextField @bind-Value=ViewModel.NewCompany.CompanyName
+                              T="string"
+                              Label="@Loc.T("detail.name")"
+                              Validation="ViewModel.CompanyValidator.ValidateValue"
+                              Immediate="true"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              For="(()=>ViewModel.NewCompany.CompanyName)" />
+
+                <MudTextField @bind-Value=ViewModel.NewCompany.OfficialWebSiteLink
+                              T="string"
+                              Label="@Loc.T("detail.officialWebsite")"
+                              Validation="ViewModel.CompanyValidator.ValidateValue"
+                              Immediate="true"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              For="(()=>ViewModel.NewCompany.OfficialWebSiteLink)" />
+            </MudForm>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="@(() => ViewModel.CreateNewCompanyDialogVisible = false)">@Loc.T("common.cancel")</MudButton>
+            <MudButton OnClick="SaveNewCompany" Disabled="ViewModel.IsSaving" Variant="Variant.Filled" Color="Color.Primary">@Loc.T("detail.createCompany")</MudButton>
+        </DialogActions>
+    </MudDialog>
+
+    @if (ViewModel.JobApplication!.Id != Guid.Empty)
+    {
+        <MudGrid>
+            <MudItem xs="12" md="8">
+                <MudCard>
+                    <MudCardContent>
+                        <div class="d-flex align-center mb-3">
+                            <MudIcon Icon="@Icons.Material.Outlined.Timeline" Color="Color.Primary" Class="mr-2" />
+                            <MudText Typo="Typo.h6" Style="font-weight:600">@Loc.T("detail.interviewProcess")</MudText>
+                            <MudSpacer />
+                            <MudButton OnClick="OpenAddStep" StartIcon="@Icons.Material.Outlined.Add" Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary">@Loc.T("detail.addStep")</MudButton>
+                        </div>
+
+                        @if (ViewModel.JobApplication.InterviewSteps.Any())
+                        {
+                            <MudTimeline TimelinePosition="TimelinePosition.Start" Class="mb-2">
+                                @foreach (var step in ViewModel.JobApplication.InterviewSteps)
+                                {
+                                    <MudTimelineItem Color="@OutcomeColor(step.Outcome)" Size="Size.Small">
+                                        <ItemContent>
+                                            <div class="d-flex align-center">
+                                                <MudText Typo="Typo.subtitle2" Style="font-weight:600">@Loc.TValue("stepType", step.Type)</MudText>
+                                                <MudSpacer />
+                                                <MudChip Size="Size.Small" Color="@OutcomeColor(step.Outcome)" Variant="Variant.Text">@Loc.TValue("outcome", step.Outcome)</MudChip>
+                                                <MudIconButton Icon="@Icons.Material.Outlined.Edit"
+                                                               Size="Size.Small"
+                                                               Color="Color.Default"
+                                                               Disabled="ViewModel.IsSaving"
+                                                               OnClick="@(() => OpenEditStep(step))" />
+                                                <MudIconButton Icon="@Icons.Material.Outlined.Delete"
+                                                               Size="Size.Small"
+                                                               Color="Color.Error"
+                                                               Disabled="ViewModel.IsSaving"
+                                                               OnClick="@(() => DeleteInterviewStep(step.Id))" />
+                                            </div>
+                                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@step.OccurredOn.ToString("dd MMM yyyy")</MudText>
+                                            @if (!string.IsNullOrWhiteSpace(step.Notes))
+                                            {
+                                                <MudText Typo="Typo.body2" Class="mt-1">@step.Notes</MudText>
+                                            }
+                                        </ItemContent>
+                                    </MudTimelineItem>
+                                }
+                            </MudTimeline>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2">@Loc.T("detail.noSteps")</MudText>
+                        }
+
+                        <MudDialog IsVisible="ViewModel.StepDialogVisible"
+                                   IsVisibleChanged="(v) => { ViewModel.StepDialogVisible = v; }"
+                                   Options="new DialogOptions(){ CloseOnEscapeKey = true, CloseButton = true }">
+                            <TitleContent>
+                                <MudText Typo="Typo.h6">@ViewModel.StepDialogTitle</MudText>
+                            </TitleContent>
+                            <DialogContent>
+                                <MudSelect T="string" @bind-Value="ViewModel.StepType" Label="@Loc.T("detail.type")" Dense="true" Class="mb-2">
+                                    @foreach (var t in MyJobApplicationViewModel.StepTypes)
+                                    {
+                                        <MudSelectItem Value="@t">@Loc.TValue("stepType", t)</MudSelectItem>
+                                    }
+                                </MudSelect>
+
+                                <MudDatePicker @bind-Date="ViewModel.StepDate" Label="@Loc.T("detail.date")" Class="mb-2" />
+
+                                <MudSelect T="string" @bind-Value="ViewModel.StepOutcome" Label="@Loc.T("detail.outcome")" Dense="true" Class="mb-2">
+                                    @foreach (var o in MyJobApplicationViewModel.Outcomes)
+                                    {
+                                        <MudSelectItem Value="@o">@Loc.TValue("outcome", o)</MudSelectItem>
+                                    }
+                                </MudSelect>
+
+                                <MudTextField @bind-Value="ViewModel.StepNotes" Label="@Loc.T("detail.notes")" Lines="3" AutoGrow="true" MaxLength="1000" />
+                            </DialogContent>
+                            <DialogActions>
+                                <MudButton OnClick="@(() => ViewModel.StepDialogVisible = false)">@Loc.T("common.cancel")</MudButton>
+                                <MudButton OnClick="SaveStep" Disabled="ViewModel.IsSaving" Variant="Variant.Filled" Color="Color.Primary">@Loc.T("common.save")</MudButton>
+                            </DialogActions>
+                        </MudDialog>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudCard>
+                    <MudCardContent>
+                        <div class="d-flex align-center mb-3">
+                            <MudText Typo="Typo.h6" Style="font-weight:600">@Loc.T("detail.details")</MudText>
+                            <MudSpacer />
+                            <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" OnClick="OpenEditDetails" />
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:12px;">
+                            <div><div class="mud-text-secondary" style="font-size:12px;">@Loc.T("detail.company")</div><MudText Typo="Typo.body1">@ViewModel.JobApplication!.Company?.CompanyName</MudText></div>
+                            <div><div class="mud-text-secondary" style="font-size:12px;">@Loc.T("detail.source")</div><MudText Typo="Typo.body1">@ViewModel.JobApplication.ApplicationSource?.Name</MudText></div>
+                            <div><div class="mud-text-secondary" style="font-size:12px;">@Loc.T("detail.workLocation")</div><MudText Typo="Typo.body1">@Loc.TValue("workLocation", ViewModel.JobApplication.WorkLocationType?.Value)</MudText></div>
+                            <div><div class="mud-text-secondary" style="font-size:12px;">@Loc.T("detail.jobType")</div><MudText Typo="Typo.body1">@Loc.TValue("jobType", ViewModel.JobApplication.JobType?.Value)</MudText></div>
+                            @if (!string.IsNullOrWhiteSpace(ViewModel.JobApplication.JobAdLink))
+                            {
+                                <div><div class="mud-text-secondary" style="font-size:12px;">@Loc.T("detail.jobAd")</div><MudLink Href="@ViewModel.JobApplication.JobAdLink" Target="_blank">@Loc.T("detail.openPosting")</MudLink></div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(ViewModel.JobApplication.Description))
+                            {
+                                <div><div class="mud-text-secondary" style="font-size:12px;">@Loc.T("detail.description")</div><MudText Typo="Typo.body2">@ViewModel.JobApplication.Description</MudText></div>
+                            }
+                        </div>
+                    </MudCardContent>
+                </MudCard>
             </MudItem>
         </MudGrid>
-    </MudCard>
+    }
+    else
+    {
+        <MudPaper Class="pa-8 mt-2" Style="text-align:center;">
+            <MudText Typo="Typo.h6" Class="mb-1">@Loc.T("detail.letsAdd")</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-4">@Loc.T("detail.letsAddSubtitle")</MudText>
+            <MudButton OnClick="OpenEditDetails" StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary">@Loc.T("detail.addDetails")</MudButton>
+        </MudPaper>
+    }
 }

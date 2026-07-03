@@ -1,11 +1,17 @@
-﻿namespace Procoding.ApplicationTracker.Domain.Entities;
+namespace Procoding.ApplicationTracker.Domain.Entities;
 
 /// <summary>
-/// Represents types of the interview candidate can have.
+/// Represents the type of a step in the job application / interview process.
 /// </summary>
 public enum InterviewStepType
 {
-    Initial,
-    Technical,
-    None
+    Applied,
+    PhoneScreen,
+    TechnicalInterview,
+    TakeHomeTask,
+    SystemDesign,
+    Behavioral,
+    Final,
+    Offer,
+    Other
 }

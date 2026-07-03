@@ -1,0 +1,68 @@
+@using Procoding.ApplicationTracker.Web.Localization
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject LocalizationService Loc
+
+<MudThemeProvider Theme="BrandTheme.Default" />
+<MudSnackbarProvider />
+
+<div class="mkt-root">
+    <header class="mkt-nav">
+        <a class="mkt-brand" href="/">
+            <span class="mkt-brand-mark"></span> @Branding.Name
+        </a>
+        <nav class="mkt-nav-links">
+            <a href="/#features">@Loc.T("mkt.nav.features")</a>
+            <a href="/#how">@Loc.T("mkt.nav.how")</a>
+        </nav>
+        <div class="mkt-nav-cta">
+            <div class="mkt-lang">
+                @foreach (var lang in Loc.Languages)
+                {
+                    <button type="button"
+                            class="mkt-lang-btn @(IsCurrent(lang.Code) ? "active" : "")"
+                            @onclick="@(() => ChangeLanguage(lang.Code))">
+                        @lang.Code.ToUpperInvariant()
+                    </button>
+                }
+            </div>
+            <AuthLink Href="/Login" Class="mkt-btn mkt-btn-ghost">@Loc.T("mkt.nav.signin")</AuthLink>
+            <AuthLink Href="/Signup" Class="mkt-btn mkt-btn-primary">@Loc.T("mkt.nav.getStarted")</AuthLink>
+        </div>
+    </header>
+
+    @Body
+
+    <footer class="mkt-footer">
+        <div>© 2026 @Branding.Name — @Branding.Tagline</div>
+        <div class="mkt-footer-links">
+            <AuthLink Href="/Login">@Loc.T("mkt.nav.signin")</AuthLink>
+            <AuthLink Href="/Signup">@Loc.T("mkt.nav.getStarted")</AuthLink>
+        </div>
+    </footer>
+</div>
+
+@code {
+    private bool IsCurrent(string code) =>
+        string.Equals(code, Loc.CurrentLanguage, StringComparison.OrdinalIgnoreCase);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Loc.EnsureLoadedAsync();
+        Loc.OnChange += OnLocalizationChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Loc.LoadLanguageFromStorageAsync();
+        }
+    }
+
+    private void OnLocalizationChanged() => InvokeAsync(StateHasChanged);
+
+    private async Task ChangeLanguage(string code) => await Loc.SetLanguageAsync(code);
+
+    public void Dispose() => Loc.OnChange -= OnLocalizationChanged;
+}

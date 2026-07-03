@@ -32,8 +32,8 @@ namespace Procoding.Architecture.Tests.EFCoreConfigurationTests
             Assert.That(entity, Is.Not.Null, "Entity should not be null");
             Assert.That(entity.GetTableName(), Is.EqualTo("InterviewSteps"));
             Assert.That(EntityTypeConfigurationHelper.PrimaryKey(entity, nameof(InterviewStep.Id)), Is.True);
-            Assert.That(EntityTypeConfigurationHelper.Property(entity, nameof(InterviewStep.Description))!.GetMaxLength, Is.EqualTo(InterviewStep.MaxLengthForDescription));
-            Assert.That(EntityTypeConfigurationHelper.Property(entity, nameof(InterviewStep.Description))?.IsNullable, Is.False);
+            Assert.That(EntityTypeConfigurationHelper.Property(entity, nameof(InterviewStep.Notes))!.GetMaxLength, Is.EqualTo(InterviewStep.MaxLengthForNotes));
+            Assert.That(EntityTypeConfigurationHelper.Property(entity, nameof(InterviewStep.Type))?.IsNullable, Is.False);
         }
 
     }

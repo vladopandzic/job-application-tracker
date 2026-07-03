@@ -5,6 +5,7 @@ using Polly;
 using Procoding.ApplicationTracker.Application;
 using Procoding.ApplicationTracker.Web.Auth;
 using Procoding.ApplicationTracker.Web.Controllers;
+using Procoding.ApplicationTracker.Web.Localization;
 using Procoding.ApplicationTracker.Web.Services;
 using Procoding.ApplicationTracker.Web.Services.Interfaces;
 using Procoding.ApplicationTracker.Web.ViewModels;
@@ -75,6 +76,9 @@ internal class Program
 
                                      services.AddHttpClient<IJobTypeService, JobTypeService>("ServerApi", x => x.BaseAddress = new Uri(baseApiUrl));
 
+                                     services.AddHttpClient<ITranslationService, TranslationService>("ServerApi", x => x.BaseAddress = new Uri(baseApiUrl));
+
+                                     services.AddScoped<LocalizationService>();
 
                                      services.AddTransient<INotificationService, NotificationService>();
                                  });

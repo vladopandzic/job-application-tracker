@@ -19,5 +19,7 @@ internal class JobApplicationGetListSpecification : Specification<JobApplication
         Query.Include(x => x.ApplicationSource);
 
         Query.Include(x => x.Company);
+
+        Query.Include(x => x.InterviewSteps);
     }
 }

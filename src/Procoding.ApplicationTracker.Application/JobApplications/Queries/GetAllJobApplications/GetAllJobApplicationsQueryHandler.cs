@@ -33,15 +33,24 @@ internal sealed class GetAllJobApplicationsQueryHandler : IQueryHandler<GetAllJo
             var workLocationDto = new WorkLocationTypeDTO(x.WorkLocationType.Value);
             var jobType = new JobTypeDTO(x.JobType.Value);
 
-            return new JobApplicationDTO(id: x.Id,
-                                         candidate: candidateDto,
-                                         applicationSource: jobApplicationSourceDto,
-                                         company: companyDto,
-                                         jobAdLink: x.JobAdLink.Value,
-                                         workLocationType: workLocationDto,
-                                         jobType: jobType,
-                                         jobPositionTitle: x.JobPositionTitle,
-                                         description: null);
+            var dto = new JobApplicationDTO(id: x.Id,
+                                           candidate: candidateDto,
+                                           applicationSource: jobApplicationSourceDto,
+                                           company: companyDto,
+                                           jobAdLink: x.JobAdLink.Value,
+                                           workLocationType: workLocationDto,
+                                           jobType: jobType,
+                                           jobPositionTitle: x.JobPositionTitle,
+                                           description: null,
+                                           status: x.JobApplicationStatus.ToString());
+
+            dto.InterviewSteps = x.InterviewSteps
+                .Where(s => s.DeletedOnUtc == null)
+                .OrderBy(s => s.OccurredOn)
+                .Select(s => new InterviewStepDTO(s.Id, s.Type.ToString(), s.OccurredOn, s.Outcome.ToString(), s.Notes))
+                .ToList();
+
+            return dto;
         }).ToList();
 
         return new JobApplicationListResponseDTO(jobApplicationsDto.AsReadOnly(), count);

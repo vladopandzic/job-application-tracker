@@ -1,21 +1,107 @@
-﻿@attribute [Authorize]
-
+@attribute [Authorize]
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
-@using Microsoft.AspNetCore.Authentication;
-@using Microsoft.AspNetCore.Components.Authorization
-@using Procoding.ApplicationTracker.Web.Auth
-@page "/"
+@using MudBlazor
+@using Procoding.ApplicationTracker.Web.ViewModels
+@page "/home"
 
-<PageTitle>Home</PageTitle>
-<br/>
-<MudAlert Severity="Severity.Success" Variant="Variant.Filled">Welcome</MudAlert>
+<PageTitle>Dashboard · JobTrek</PageTitle>
 
+<div class="jf-page-header mb-4">
+    <div class="d-flex align-center" style="gap:16px;">
+        <div style="flex:1;min-width:0;">
+            <MudText Typo="Typo.h5" Style="font-weight:700;color:#fff;">@Loc.T("dashboard.welcome")@(string.IsNullOrEmpty(_firstName) ? "" : $", {_firstName}")</MudText>
+            <MudText Typo="Typo.body2" Style="color:rgba(255,255,255,0.85);">@Loc.T("dashboard.subtitle")</MudText>
+        </div>
+        <MudButton Href="my-job-applications/new" StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Style="background:#fff;color:#4F46E5;font-weight:600;">@Loc.T("nav.newApplication")</MudButton>
+    </div>
+</div>
 
-@code {
+@if (ViewModel.IsLoading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else if (ViewModel.Total == 0)
+{
+    <MudPaper Class="pa-8" Style="text-align:center;">
+        <MudText Typo="Typo.h6" Class="mb-1">No applications yet</MudText>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary mb-4">Add your first job application to start tracking your search.</MudText>
+        <MudButton Href="my-job-applications/new" StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary">@Loc.T("nav.newApplication")</MudButton>
+    </MudPaper>
+}
+else
+{
+    <MudGrid Class="mb-2">
+        <MudItem xs="6" md="3">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">@Loc.T("dashboard.applications")</MudText>
+                <MudText Typo="Typo.h4" Style="font-weight:700">@ViewModel.Total</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="6" md="3">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">@Loc.T("dashboard.inProcess")</MudText>
+                <MudText Typo="Typo.h4" Style="font-weight:700;color:#F59E0B;">@ViewModel.InProcess</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="6" md="3">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">@Loc.T("dashboard.offers")</MudText>
+                <MudText Typo="Typo.h4" Style="font-weight:700;color:#7C3AED;">@ViewModel.Offers</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="6" md="3">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">@Loc.T("dashboard.responseRate")</MudText>
+                <MudText Typo="Typo.h4" Style="font-weight:700;color:#16A34A;">@ViewModel.ResponseRatePercent%</MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
 
+    <MudGrid>
+        <MudItem xs="12" md="7">
+            <MudCard>
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-3" Style="font-weight:600">@Loc.T("dashboard.pipeline")</MudText>
+                    @foreach (var f in Funnel)
+                    {
+                        var count = ViewModel.CountFor(f.Status);
+                        var pct = ViewModel.Total == 0 ? 0 : (int)Math.Round(100.0 * count / ViewModel.Total);
+                        <div class="d-flex align-center mb-3" style="gap:12px;">
+                            <div style="width:92px;font-size:13px;" class="mud-text-secondary">@f.Label</div>
+                            <div style="flex:1;background:#EEF0F4;border-radius:6px;height:10px;overflow:hidden;">
+                                <div style="width:@(pct)%;background:@f.Color;height:100%;border-radius:6px;"></div>
+                            </div>
+                            <div style="width:28px;text-align:right;font-weight:600;">@count</div>
+                        </div>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
 
-
-    [CascadingParameter]
-    private HttpContext? HttpContext { get; set; }
-
+        <MudItem xs="12" md="5">
+            <MudCard>
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-3" Style="font-weight:600">@Loc.T("dashboard.recentActivity")</MudText>
+                    @if (ViewModel.RecentActivity.Any())
+                    {
+                        @foreach (var a in ViewModel.RecentActivity)
+                        {
+                            <div class="d-flex align-center mb-3" style="gap:10px;">
+                                <MudIcon Icon="@Icons.Material.Filled.Circle" Color="@OutcomeColor(a.Outcome)" Style="font-size:10px;" />
+                                <div style="flex:1;min-width:0;">
+                                    <MudText Typo="Typo.body2" Style="font-weight:600">@StepTypeLabel(a.Type) · @a.Company</MudText>
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@a.Position — @a.When.ToString("dd MMM yyyy")</MudText>
+                                </div>
+                                <MudChip Size="Size.Small" Variant="Variant.Text" Color="@OutcomeColor(a.Outcome)">@a.Outcome</MudChip>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">No interview activity yet. Add steps to your applications to see them here.</MudText>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
 }

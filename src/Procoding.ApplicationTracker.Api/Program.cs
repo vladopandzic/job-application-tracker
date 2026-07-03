@@ -40,10 +40,25 @@ public class Program
              .AddHandlerValidations();
         });
 
+        // Database provider is selectable via the "DatabaseProvider" config key ("Postgres" | "SqlServer").
+        // Postgres migrations live in the dedicated migrations assembly; SqlServer migrations live in Infrastructure.
+        var databaseProvider = builder.Configuration.GetValue<string>("DatabaseProvider") ?? "Postgres";
+        var connectionString = builder.Configuration.GetConnectionString("JobApplicationDatabase");
+
         builder.Services.AddDbContext<ApplicationDbContext>(option =>
-        option.UseNpgsql(builder.Configuration.GetConnectionString("JobApplicationDatabase"), 
-        x => x.MigrationsAssembly("Procoding.ApplicationTracker.Persistance.Migrations.PostgreSQL")));
-        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+        {
+            if (string.Equals(databaseProvider, "SqlServer", StringComparison.OrdinalIgnoreCase))
+            {
+                option.UseSqlServer(connectionString,
+                    x => x.MigrationsAssembly("Procoding.ApplicationTracker.Infrastructure"));
+            }
+            else
+            {
+                option.UseNpgsql(connectionString,
+                    x => x.MigrationsAssembly("Procoding.ApplicationTracker.Persistance.Migrations.PostgreSQL"));
+                AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+            }
+        });
 
         builder.Services.AddPersistance();
 
@@ -125,7 +140,23 @@ public class Program
         });
         var app = builder.Build();
 
-        //using ApplicationDbContext context = await SeedOneEmployee(app);
+        // Base UI translations (Croatian + English) — seeded on every startup if missing.
+        using (var translationScope = app.Services.CreateScope())
+        {
+            var translationDb = translationScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            await TranslationSeeder.SeedAsync(translationDb);
+        }
+
+        // Development-only demo data so the UI (Kanban board) has something to show.
+        if (app.Environment.IsDevelopment())
+        {
+            using var scope = app.Services.CreateScope();
+            var seedDb = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var candidateManager = scope.ServiceProvider.GetRequiredService<UserManager<Candidate>>();
+            var employeeManager = scope.ServiceProvider.GetRequiredService<UserManager<Employee>>();
+            var seedTimeProvider = scope.ServiceProvider.GetRequiredService<TimeProvider>();
+            await DevDataSeeder.SeedAsync(seedDb, candidateManager, employeeManager, seedTimeProvider);
+        }
 
         app.MapDefaultEndpoints();
 

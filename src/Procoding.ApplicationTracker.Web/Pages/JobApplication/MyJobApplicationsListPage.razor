@@ -1,43 +1,61 @@
-﻿@page "/my-job-applications"
+@page "/my-job-applications"
 @using MudBlazor
 @using Procoding.ApplicationTracker.DTOs.Model
+@using Procoding.ApplicationTracker.Web.Localization
 
+<style>
+    /* Desktop shows the data grid; phones get a compact card list instead of the grid's
+       tall stacked "label: value" rows, which are unreadable on a narrow screen. */
+    .jf-list-mobile { display: none; }
 
-@if (ViewModel.IsLoading)
-{
-    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-}
-else
-{
-    <br />
-    <MudCard>
-        <MudToolBar>
-            <MudText Typo="Typo.h5" Style="font-weight:600">Job applications</MudText>
-            <MudSpacer/>
-            <MudLink Href="@($"my-job-applications/new")">
-                <MudButton StartIcon="@Icons.Material.Outlined.NewLabel" Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Success">New</MudButton>
-            </MudLink>
-        </MudToolBar>
-     
-    </MudCard>
-    <br />
+    @@media (max-width: 700px) {
+        .jf-list-desktop { display: none; }
+        .jf-list-mobile { display: block; }
+    }
+</style>
 
-    <MudDataGrid ServerData="@LoadGridData" T="JobApplicationDTO" Hover=true RowsPerPage="10" FilterCaseSensitivity="DataGridFilterCaseSensitivity.Ignore">
+<MudStack Row AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-4 mt-2">
+    <MudText Typo="Typo.h5" Style="font-weight:600">@Loc.T("list.title")</MudText>
+    <MudSpacer />
+    <MudButton Href="@($"my-job-applications/board")" StartIcon="@Icons.Material.Outlined.ViewKanban" Variant="@Variant.Outlined" Color="@Color.Primary" Class="mr-2">@Loc.T("list.board")</MudButton>
+    <MudButton Href="@($"my-job-applications/new")" StartIcon="@Icons.Material.Filled.Add" Variant="@Variant.Filled" Color="@Color.Primary">@Loc.T("common.newApplication")</MudButton>
+</MudStack>
+
+<div class="jf-list-desktop">
+    <MudDataGrid ServerData="@LoadGridData" T="JobApplicationDTO" Hover=true RowsPerPage="25" FilterCaseSensitivity="DataGridFilterCaseSensitivity.Ignore">
         <Columns>
-            <PropertyColumn Property="x => x.JobPositionTitle" Title="JobPositionTitle" Resizable="true" Filterable="true" />
-            <PropertyColumn Property="x => x.Company.CompanyName" Title="Company.CompanyName" Resizable="true" Filterable="true" />
-            <PropertyColumn Property="x => x.ApplicationSource.Name" Title="ApplicationSource.Name" Resizable="true" Filterable="true" />
-            <PropertyColumn Property="x => x.JobAdLink" Title="JobAdLink" Resizable="true" Filterable="true" />
-            <PropertyColumn Property="x => x.JobType.Value" Title="JobType" Resizable="true" Filterable="true" />
-            <PropertyColumn Property="x => x.WorkLocationType.Value" Title="WorkLocationType" Resizable="true" Filterable="true" />
+            <PropertyColumn Property="x => x.JobPositionTitle" Title="@Loc.T("list.col.position")" Filterable="true" />
+            <PropertyColumn Property="x => x.Company.CompanyName" Title="@Loc.T("list.col.company")" Filterable="true" />
+            <PropertyColumn Property="x => x.ApplicationSource.Name" Title="@Loc.T("list.col.source")" Filterable="true" />
+            <PropertyColumn Property="x => x.JobType.Value" Title="@Loc.T("list.col.type")" Filterable="true">
+                <CellTemplate Context="data">@Loc.TValue("jobType", data.Item.JobType?.Value)</CellTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="x => x.WorkLocationType.Value" Title="@Loc.T("list.col.location")" Filterable="true">
+                <CellTemplate Context="data">@Loc.TValue("workLocation", data.Item.WorkLocationType?.Value)</CellTemplate>
+            </PropertyColumn>
 
-            <TemplateColumn CellClass="d-flex justify-end" Filterable="false">
+            <TemplateColumn Title="@Loc.T("list.col.status")" Sortable="false" Filterable="false">
                 <CellTemplate Context="data">
-                    <MudStack Row>
-                        <MudLink Href="@($"my-job-applications/{data.Item.Id}")">
-                            <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary">Details</MudButton>
+                    <MudChip Size="Size.Small" Variant="Variant.Filled" Color="@StatusColor(data.Item.Status)">@Loc.T(StatusKey(data.Item.Status))</MudChip>
+                </CellTemplate>
+            </TemplateColumn>
+
+            <TemplateColumn Title="@Loc.T("list.col.jobAd")" Sortable="false" Filterable="false">
+                <CellTemplate Context="data">
+                    @if (!string.IsNullOrWhiteSpace(data.Item.JobAdLink))
+                    {
+                        <MudLink Href="@data.Item.JobAdLink" Target="_blank" Rel="noopener">
+                            <MudIconButton Icon="@Icons.Material.Outlined.OpenInNew" Size="Size.Small" Color="Color.Primary" />
                         </MudLink>
-                    </MudStack>
+                    }
+                </CellTemplate>
+            </TemplateColumn>
+
+            <TemplateColumn CellClass="d-flex justify-end" Sortable="false" Filterable="false">
+                <CellTemplate Context="data">
+                    <MudLink Href="@($"my-job-applications/{data.Item.Id}")">
+                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary">@Loc.T("common.details")</MudButton>
+                    </MudLink>
                 </CellTemplate>
             </TemplateColumn>
         </Columns>
@@ -45,4 +63,35 @@ else
             <MudDataGridPager T="DTOs.Model.JobApplicationDTO" />
         </PagerContent>
     </MudDataGrid>
-}
+</div>
+
+<div class="jf-list-mobile">
+    @if (ViewModel.IsLoading && !ViewModel.JobApplications.Any())
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        @foreach (var app in ViewModel.JobApplications)
+        {
+            <MudLink Href="@($"my-job-applications/{app.Id}")" Underline="Underline.None" Class="d-block mb-3">
+                <MudPaper Class="pa-3" Elevation="2" Style="cursor:pointer;">
+                    <div class="d-flex" style="gap:12px;">
+                        <div style="flex:1;min-width:0;">
+                            <MudText Typo="Typo.body1" Style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mud-palette-text-primary);">@app.JobPositionTitle</MudText>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@app.Company?.CompanyName@(string.IsNullOrWhiteSpace(app.ApplicationSource?.Name) ? "" : $" · {app.ApplicationSource!.Name}")</MudText>
+                            <div class="d-flex mt-2" style="gap:6px;flex-wrap:wrap;">
+                                <MudChip Size="Size.Small" Variant="Variant.Outlined">@Loc.TValue("jobType", app.JobType?.Value)</MudChip>
+                                <MudChip Size="Size.Small" Variant="Variant.Outlined">@Loc.TValue("workLocation", app.WorkLocationType?.Value)</MudChip>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-column align-end justify-space-between" style="gap:8px;">
+                            <MudChip Size="Size.Small" Variant="Variant.Filled" Color="@StatusColor(app.Status)">@Loc.T(StatusKey(app.Status))</MudChip>
+                            <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Class="mud-text-secondary" />
+                        </div>
+                    </div>
+                </MudPaper>
+            </MudLink>
+        }
+    }
+</div>

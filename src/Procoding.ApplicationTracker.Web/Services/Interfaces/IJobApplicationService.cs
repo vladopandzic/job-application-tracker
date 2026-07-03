@@ -39,4 +39,27 @@ public interface IJobApplicationService
     /// <param name="id"></param>
     /// <returns></returns>
     Task<Result<JobApplicationUpdatedResponseDTO>> UpdateJobApplicationAsync(JobApplicationUpdateRequestDTO request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Changes the status of one job application.
+    /// </summary>
+    /// <param name="request">Request containing the job application id and the target status.</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task<Result<JobApplicationStatusChangedResponseDTO>> ChangeJobApplicationStatusAsync(JobApplicationChangeStatusRequestDTO request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Adds an interview step to a job application.
+    /// </summary>
+    Task<Result<InterviewStepAddedResponseDTO>> AddInterviewStepAsync(AddInterviewStepRequestDTO request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes an interview step from a job application.
+    /// </summary>
+    Task<Result<Guid>> DeleteInterviewStepAsync(Guid jobApplicationId, Guid interviewStepId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates an existing interview step.
+    /// </summary>
+    Task<Result<Procoding.ApplicationTracker.DTOs.Model.InterviewStepDTO>> UpdateInterviewStepAsync(UpdateInterviewStepRequestDTO request, CancellationToken cancellationToken = default);
 }
