@@ -215,20 +215,6 @@ public class Program
 
         app.MapControllers();
 
-        // TEMP diagnostic — verifies the real extraction path end-to-end. Remove after testing.
-        app.MapGet("/diag/extract", async (Procoding.ApplicationTracker.Application.Core.Abstractions.AiExtraction.IJobPostingExtractor extractor,
-                                           CancellationToken ct) =>
-        {
-            const string sample = """
-                Senior .NET Engineer (Remote) — Contoso d.o.o.
-                Contoso (https://contoso.example) is hiring a Senior .NET Engineer to join our fully remote team.
-                Full-time position. You'll build ASP.NET Core APIs, work with PostgreSQL and Azure, and mentor juniors.
-                Requirements: 5+ years C#/.NET, EF Core, cloud experience. We offer flexible hours and a learning budget.
-                """;
-            var result = await extractor.ExtractAsync(sample, ct);
-            return result is null ? Results.Text("NULL — check Gemini key/logs") : Results.Json(result);
-        });
-
         app.Run();
     }
 
