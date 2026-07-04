@@ -120,6 +120,11 @@ public static class UrlConstants
 
         public const string GET_ALL_URL = "job-applications";
 
+        public static string ExtractFromText()
+        {
+            return $"{GET_ALL_URL}/extract-from-text";
+        }
+
         public static string GetOne(Guid id)
         {
             return $"{GET_ALL_URL}/{id}";

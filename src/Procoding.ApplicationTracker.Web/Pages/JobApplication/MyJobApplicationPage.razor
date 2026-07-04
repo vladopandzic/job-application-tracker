@@ -40,6 +40,33 @@ else if (ViewModel.JobApplication is not null)
             <MudText Typo="Typo.h6">@(ViewModel.JobApplication!.Id == Guid.Empty ? Loc.T("detail.newApplication") : Loc.T("detail.editDetails"))</MudText>
         </TitleContent>
         <DialogContent>
+                <MudPaper Elevation="0" Class="pa-3 mb-3" Style="background:#f5f3ff;border:1px solid #ede9fe;border-radius:10px;">
+                    <div class="d-flex align-center mb-1">
+                        <MudIcon Icon="@Icons.Material.Outlined.AutoAwesome" Color="Color.Primary" Class="mr-2" Size="Size.Small" />
+                        <MudText Typo="Typo.subtitle2" Style="font-weight:600">Popuni AI-jem</MudText>
+                    </div>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Zalijepi tekst oglasa i AI će popuniti polja ispod.</MudText>
+                    <MudTextField @bind-Value="ViewModel.AiImportText"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Lines="4"
+                                  AutoGrow="true"
+                                  MaxLines="8"
+                                  Class="mt-2"
+                                  Placeholder="Zalijepi cijeli tekst oglasa ovdje…"
+                                  Label="Tekst oglasa" />
+                    <div class="d-flex justify-end mt-2">
+                        <MudButton OnClick="ImportFromAi"
+                                   Disabled="@(ViewModel.IsImporting || string.IsNullOrWhiteSpace(ViewModel.AiImportText) || ViewModel.AiImportText.Trim().Length < 30)"
+                                   StartIcon="@Icons.Material.Outlined.AutoAwesome"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   Size="Size.Small">
+                            @(ViewModel.IsImporting ? "AI popunjava…" : "Popuni AI-jem")
+                        </MudButton>
+                    </div>
+                </MudPaper>
+
                 <MudForm @ref=mudForm Model="ViewModel.JobApplication" ValidationDelay="0" Validation="ViewModel.Validator.ValidateValue">
 
                     <MudTextField @bind-Value=ViewModel.JobApplication.JobPositionTitle

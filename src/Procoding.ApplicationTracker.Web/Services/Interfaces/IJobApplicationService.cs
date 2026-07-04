@@ -34,6 +34,11 @@ public interface IJobApplicationService
     Task<Result<JobApplicationInsertedResponseDTO>> InsertJobApplicationAsync(JobApplicationInsertRequestDTO request, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// AI-assisted import: sends pasted job posting text, returns structured fields to pre-fill the form.
+    /// </summary>
+    Task<Result<ExtractedJobPostingResponseDTO>> ExtractJobPostingAsync(ExtractJobPostingRequestDTO request, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Updates one jobApplication.
     /// </summary>
     /// <param name="id"></param>

@@ -37,6 +37,12 @@ public class MyJobApplicationViewModel : EditViewModelBase
     /// <summary>Controls the "edit application details" dialog (the form).</summary>
     public bool EditDetailsDialogVisible { get; set; }
 
+    /// <summary>Raw job posting text pasted by the user for AI import.</summary>
+    public string AiImportText { get; set; } = string.Empty;
+
+    /// <summary>True while the AI extraction request is in flight.</summary>
+    public bool IsImporting { get; set; }
+
     public CompanyDTO NewCompany { get; set; } = default!;
 
     public string PageTitle { get; set; }
@@ -229,6 +235,75 @@ public class MyJobApplicationViewModel : EditViewModelBase
 
 
         IsSaving = false;
+    }
+
+    /// <summary>
+    /// Sends the pasted posting text to the AI extractor and pre-fills the form with what it returns.
+    /// Only overwrites fields the model actually produced; the user reviews before saving.
+    /// Returns a short status: null on success, otherwise an error message to surface.
+    /// </summary>
+    public async Task<string?> ImportFromTextAsync(CancellationToken cancellationToken = default)
+    {
+        if (JobApplication is null || string.IsNullOrWhiteSpace(AiImportText) || AiImportText.Trim().Length < 30)
+        {
+            return null;
+        }
+
+        IsImporting = true;
+        var result = await _jobApplicationService.ExtractJobPostingAsync(
+            new DTOs.Request.JobApplications.ExtractJobPostingRequestDTO { Content = AiImportText }, cancellationToken);
+        IsImporting = false;
+
+        if (result.IsFailed)
+        {
+            return result.Errors.FirstOrDefault()?.Message ?? "AI import nije uspio.";
+        }
+
+        var extracted = result.Value;
+
+        if (!string.IsNullOrWhiteSpace(extracted.PositionTitle))
+        {
+            JobApplication.JobPositionTitle = extracted.PositionTitle;
+        }
+
+        if (!string.IsNullOrWhiteSpace(extracted.Description))
+        {
+            JobApplication.Description = extracted.Description.Length > 500 ? extracted.Description[..500] : extracted.Description;
+        }
+
+        if (!string.IsNullOrWhiteSpace(extracted.JobType))
+        {
+            var match = JobTypes.FirstOrDefault(t => string.Equals(t.Value, extracted.JobType, StringComparison.OrdinalIgnoreCase));
+            if (match is not null)
+            {
+                JobApplication.JobType = match;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(extracted.WorkLocationType))
+        {
+            var match = WorkLocationTypes.FirstOrDefault(w => string.Equals(w.Value, extracted.WorkLocationType, StringComparison.OrdinalIgnoreCase));
+            if (match is not null)
+            {
+                JobApplication.WorkLocationType = match;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(extracted.CompanyName))
+        {
+            var existing = Companies.FirstOrDefault(c => string.Equals(c.CompanyName, extracted.CompanyName, StringComparison.OrdinalIgnoreCase));
+            if (existing is not null)
+            {
+                JobApplication.Company = existing;
+            }
+            else
+            {
+                // Pre-fill the "create new company" fields so the user can add it in one click.
+                NewCompany = new CompanyDTO(Guid.Empty, extracted.CompanyName, extracted.CompanyWebsite ?? string.Empty);
+            }
+        }
+
+        return null;
     }
 
     private async Task GetCompanies(CancellationToken cancellationToken)

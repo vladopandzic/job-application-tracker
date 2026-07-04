@@ -49,6 +49,16 @@ public class JobApplicationService : IJobApplicationService
         return await response.HandleResponseAsync<JobApplicationInsertedResponseDTO>(cancellationToken);
     }
 
+    public async Task<Result<ExtractedJobPostingResponseDTO>> ExtractJobPostingAsync(ExtractJobPostingRequestDTO request,
+                                                                                     CancellationToken cancellationToken = default)
+    {
+        await Authorize();
+
+        var response = await _httpClient.PostAsJsonAsync(UrlConstants.JobApplications.ExtractFromText(), request, cancellationToken);
+
+        return await response.HandleResponseAsync<ExtractedJobPostingResponseDTO>(cancellationToken);
+    }
+
     public async Task<Result<JobApplicationUpdatedResponseDTO>> UpdateJobApplicationAsync(JobApplicationUpdateRequestDTO request,
                                                                                           CancellationToken cancellationToken = default)
     {

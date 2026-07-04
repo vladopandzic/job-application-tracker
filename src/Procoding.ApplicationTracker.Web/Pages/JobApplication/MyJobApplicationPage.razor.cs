@@ -107,6 +107,22 @@ public partial class MyJobApplicationPage : IDisposable
 
     private void OpenEditDetails() => ViewModel.EditDetailsDialogVisible = true;
 
+    private async Task ImportFromAi()
+    {
+        var error = await ViewModel.ImportFromTextAsync();
+
+        if (error is not null)
+        {
+            Snackbar.Add(error, Severity.Error);
+        }
+        else
+        {
+            Snackbar.Add("Polja su popunjena AI-jem — pregledaj i spremi.", Severity.Success);
+        }
+
+        StateHasChanged();
+    }
+
     private string CompaniesToStringFunc(CompanyDTO company)
     {
         return company?.CompanyName ?? string.Empty;
