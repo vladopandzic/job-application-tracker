@@ -1,29 +1,25 @@
-# Deploy JobTrek to MonsterASP.NET via Web Deploy on every push to master.
+# Build, test, and deploy JobTrek to MonsterASP.NET on every push to master.
 #
 # MonsterASP hosts .NET Core natively (IIS) — it does NOT build source, so we build + publish here
-# and push the compiled output with Web Deploy. This is the reliable path (unlike the panel's
-# "GitHub Deploy" which only syncs source files).
+# and push the compiled output with Web Deploy.
 #
-# App = TWO hosts (API + Web/Blazor Server). You need a MonsterASP website per app:
-#   - Free plan = 1 website  -> deploy ONE app; the other needs a 2nd site (or merge the two).
-#   - Premium Multi ($7/mo)  -> up to 10 sites -> run both jobs below.
+# App = TWO hosts (API + Web/Blazor Server) -> one MonsterASP website each:
+#   Web -> jobtrek.runasp.net       API -> jobtrek-api.runasp.net
 #
-# ---- Required GitHub repository secrets (Settings -> Secrets and variables -> Actions) ----
-# Secrets live encrypted in GitHub and are injected at deploy time — they are NEVER in the repo.
+# Note: the Aspire AppHost project (local-dev orchestration only) is NOT built here — the newer SDK
+# errors on its deprecated Aspire workload, and it isn't needed for tests or deployment.
 #
-# WebDeploy (from MonsterASP: Manage site -> "WebDeploy" -> activate + download .publishSettings):
-#   MONSTERASP_SERVER      e.g. site77745.siteasp.net   (the msdeploy computer name / server)
-#   MONSTERASP_USERNAME    WebDeploy username
-#   MONSTERASP_PASSWORD    WebDeploy password
-#   MONSTERASP_WEB_SITE    website name for the Blazor Web app (e.g. site77745)
-#   MONSTERASP_API_SITE    website name for the API (only if you use a 2nd site)
-#
-# App runtime config (written into appsettings.Production.json at deploy — never committed):
+# ---- Required GitHub secrets (Settings -> Secrets and variables -> Actions -> Secrets) ----
+# Secrets live encrypted in GitHub, injected at deploy — NEVER in the repo.
+# Per site, from MonsterASP: Manage site -> Deploy -> "WebDeploy access":
+#   MONSTERASP_WEB_SERVER / MONSTERASP_WEB_USERNAME / MONSTERASP_WEB_PASSWORD / MONSTERASP_WEB_SITE
+#   MONSTERASP_API_SERVER / MONSTERASP_API_USERNAME / MONSTERASP_API_PASSWORD / MONSTERASP_API_SITE
+# App runtime config:
 #   DB_CONNECTION_STRING   the MSSQL connection string incl. password (from your MonsterASP DB)
 #   JWT_SECRET             a strong random secret, e.g. `openssl rand -base64 64`
-#   BASE_API_URL           the public URL of the deployed API (used by the Web app)
+#   BASE_API_URL           https://jobtrek-api.runasp.net   (public URL of the API, used by the Web)
 
-name: Deploy to MonsterASP
+name: Build, test & deploy (MonsterASP)
 
 on:
   push:
@@ -31,13 +27,29 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy-web:
-    name: Publish & deploy Web (Blazor)
-    runs-on: windows-latest
-    if: ${{ vars.DEPLOY_WEB != 'false' }}
+  build_and_test:
+    name: Build & test
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Unit & architecture tests
+        run: |
+          dotnet test test/Procoding.ApplicationTracker.Domain.Tests/Procoding.ApplicationTracker.Domain.Tests.csproj -c Release
+          dotnet test test/Procoding.ApplicationTracker.Application.Tests/Procoding.ApplicationTracker.Application.Tests.csproj -c Release
+          dotnet test test/Procoding.ApplicationTracker.Web.Tests/Procoding.ApplicationTracker.Web.Tests.csproj -c Release
+          dotnet test test/Procoding.Architecture.Tests/Procoding.Architecture.Tests.csproj -c Release
+    # Integration tests (test/...Api.IntegrationTests) use Docker/Testcontainers — add a separate
+    # job with a Docker service if you want them in CI.
 
+  deploy_web:
+    name: Deploy Web (Blazor)
+    needs: build_and_test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
@@ -52,23 +64,21 @@ jobs:
         run: |
           @{ BaseApiUrl = $env:BASE_API_URL } | ConvertTo-Json | Set-Content publish-web/appsettings.Production.json -Encoding utf8
 
-      - name: Web Deploy -> MonsterASP
+      - name: Web Deploy -> MonsterASP (Web)
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0
         with:
           website-name: ${{ secrets.MONSTERASP_WEB_SITE }}
-          server-computer-name: ${{ secrets.MONSTERASP_SERVER }}
-          server-username: ${{ secrets.MONSTERASP_USERNAME }}
-          server-password: ${{ secrets.MONSTERASP_PASSWORD }}
+          server-computer-name: ${{ secrets.MONSTERASP_WEB_SERVER }}
+          server-username: ${{ secrets.MONSTERASP_WEB_USERNAME }}
+          server-password: ${{ secrets.MONSTERASP_WEB_PASSWORD }}
           source-path: publish-web
 
-  # Enable this job once you have a SECOND MonsterASP site for the API (Premium Multi or a 2nd free site).
-  deploy-api:
-    name: Publish & deploy API
+  deploy_api:
+    name: Deploy API
+    needs: build_and_test
     runs-on: windows-latest
-    if: ${{ vars.DEPLOY_API == 'true' }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
@@ -89,11 +99,11 @@ jobs:
             CandidateJwtTokenSettings = @{ SecretKey = $env:JWT_SECRET }
           } | ConvertTo-Json -Depth 5 | Set-Content publish-api/appsettings.Production.json -Encoding utf8
 
-      - name: Web Deploy -> MonsterASP
+      - name: Web Deploy -> MonsterASP (API)
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0
         with:
           website-name: ${{ secrets.MONSTERASP_API_SITE }}
-          server-computer-name: ${{ secrets.MONSTERASP_SERVER }}
-          server-username: ${{ secrets.MONSTERASP_USERNAME }}
-          server-password: ${{ secrets.MONSTERASP_PASSWORD }}
+          server-computer-name: ${{ secrets.MONSTERASP_API_SERVER }}
+          server-username: ${{ secrets.MONSTERASP_API_USERNAME }}
+          server-password: ${{ secrets.MONSTERASP_API_PASSWORD }}
           source-path: publish-api
