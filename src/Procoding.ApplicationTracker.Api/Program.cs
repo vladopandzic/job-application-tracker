@@ -203,26 +203,6 @@ public class Program
 
         app.MapControllers();
 
-        // TEMP diagnostic — surfaces the real SMTP error server-side (auth / blocked port / sender).
-        // Remove after email debugging.
-        app.MapGet("/diag/email", async (Procoding.ApplicationTracker.Application.Core.Abstractions.Emailing.IEmailSender emailSender,
-                                         string to,
-                                         CancellationToken ct) =>
-        {
-            try
-            {
-                await emailSender.SendAsync(
-                    new Procoding.ApplicationTracker.Application.Core.Abstractions.Emailing.EmailMessage(
-                        to, "Diag", "JobTrek SMTP diag", "<p>diag ok</p>", "diag ok"),
-                    ct);
-                return Results.Text("OK - sent (check inbox + Brevo logs)");
-            }
-            catch (Exception ex)
-            {
-                return Results.Text($"ERROR: {ex.GetType().Name}: {ex.Message}\nINNER: {ex.InnerException?.GetType().Name}: {ex.InnerException?.Message}");
-            }
-        });
-
         app.Run();
     }
 
