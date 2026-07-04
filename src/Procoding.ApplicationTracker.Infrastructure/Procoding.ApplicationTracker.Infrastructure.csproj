@@ -17,11 +17,13 @@
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.1" />
 	  <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6" />
 	  <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
+	  <PackageReference Include="MailKit" Version="4.8.0" />
 
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Procoding.ApplicationTracker.Domain\Procoding.ApplicationTracker.Domain.csproj" />
+    <ProjectReference Include="..\Procoding.ApplicationTracker.Application\Procoding.ApplicationTracker.Application.csproj" />
   </ItemGroup>
 
 </Project>

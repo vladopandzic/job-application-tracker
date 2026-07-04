@@ -18,6 +18,13 @@
 #   DB_CONNECTION_STRING   the MSSQL connection string incl. password (from your MonsterASP DB)
 #   JWT_SECRET             a strong random secret, e.g. `openssl rand -base64 64`
 #   BASE_API_URL           https://jobtrek-api.runasp.net   (public URL of the API, used by the Web)
+#   SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD   bootstrap admin (employee) login, created on API startup
+# Email (transactional SMTP, e.g. Brevo — free, no domain, verify a single sender):
+#   SMTP_HOST        e.g. smtp-relay.brevo.com
+#   SMTP_PORT        587
+#   SMTP_USERNAME    your Brevo SMTP login
+#   SMTP_PASSWORD    your Brevo SMTP key (NOT the account password)
+#   SMTP_FROM_EMAIL  the verified sender address (e.g. your Gmail)
 
 name: Build, test & deploy (MonsterASP)
 
@@ -96,13 +103,29 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           SEED_ADMIN_EMAIL: ${{ secrets.SEED_ADMIN_EMAIL }}
           SEED_ADMIN_PASSWORD: ${{ secrets.SEED_ADMIN_PASSWORD }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM_EMAIL: ${{ secrets.SMTP_FROM_EMAIL }}
         run: |
+          $smtpPort = if ($env:SMTP_PORT) { [int]$env:SMTP_PORT } else { 587 }
           @{
             DatabaseProvider = "SqlServer"
             ConnectionStrings = @{ JobApplicationDatabase = $env:DB_CONNECTION_STRING }
             EmployeeJwtTokenSettings = @{ SecretKey = $env:JWT_SECRET }
             CandidateJwtTokenSettings = @{ SecretKey = $env:JWT_SECRET }
             SeedAdmin = @{ Email = $env:SEED_ADMIN_EMAIL; Password = $env:SEED_ADMIN_PASSWORD; FirstName = "Vlado"; LastName = "Pandzic" }
+            Email = @{
+              Enabled = $true
+              Host = $env:SMTP_HOST
+              Port = $smtpPort
+              Username = $env:SMTP_USERNAME
+              Password = $env:SMTP_PASSWORD
+              FromEmail = $env:SMTP_FROM_EMAIL
+              FromName = "JobTrek"
+              UseStartTls = $true
+            }
           } | ConvertTo-Json -Depth 5 | Set-Content publish-api/appsettings.Production.json -Encoding utf8
 
       - name: Web Deploy -> MonsterASP (API)

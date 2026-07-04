@@ -1,9 +1,12 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Procoding.ApplicationTracker.Application.Core.Abstractions.Emailing;
 using Procoding.ApplicationTracker.Domain.Abstractions;
 using Procoding.ApplicationTracker.Domain.Auth;
 using Procoding.ApplicationTracker.Domain.Repositories;
 using Procoding.ApplicationTracker.Infrastructure.Authentication;
 using Procoding.ApplicationTracker.Infrastructure.Data;
+using Procoding.ApplicationTracker.Infrastructure.Emailing;
 using Procoding.ApplicationTracker.Infrastructure.Repositories;
 
 namespace Procoding.ApplicationTracker.Infrastructure;
@@ -35,6 +38,18 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IWorkLocationTypeRepository, WorkLocationTypeRepository>();
 
         services.AddScoped<ITranslationRepository, TranslationRepository>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registers transactional email sending (SMTP). Options are bound from the "Email" configuration
+    /// section (populated from secrets at deploy). Safe when unconfigured — the sender no-ops.
+    /// </summary>
+    public static IServiceCollection AddEmailSending(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<SmtpEmailOptions>(configuration.GetSection(SmtpEmailOptions.SectionName));
+        services.AddScoped<IEmailSender, SmtpEmailSender>();
 
         return services;
     }

@@ -62,6 +62,8 @@ public class Program
 
         builder.Services.AddPersistance();
 
+        builder.Services.AddEmailSending(builder.Configuration);
+
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.AddProblemDetails();
 
