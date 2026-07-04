@@ -9,13 +9,19 @@
 #   - Premium Multi ($7/mo)  -> up to 10 sites -> run both jobs below.
 #
 # ---- Required GitHub repository secrets (Settings -> Secrets and variables -> Actions) ----
-# From MonsterASP: Manage site -> "WebDeploy" -> activate + download the .publishSettings, then read
-# these values from it (the token/password you add yourself — never commit them):
+# Secrets live encrypted in GitHub and are injected at deploy time — they are NEVER in the repo.
+#
+# WebDeploy (from MonsterASP: Manage site -> "WebDeploy" -> activate + download .publishSettings):
 #   MONSTERASP_SERVER      e.g. site77745.siteasp.net   (the msdeploy computer name / server)
-#   MONSTERASP_USERNAME    your WebDeploy username
-#   MONSTERASP_PASSWORD    your WebDeploy password
-#   MONSTERASP_WEB_SITE    the website name for the Blazor Web app (e.g. jobtrek)
-#   MONSTERASP_API_SITE    the website name for the API (only if you use a 2nd site)
+#   MONSTERASP_USERNAME    WebDeploy username
+#   MONSTERASP_PASSWORD    WebDeploy password
+#   MONSTERASP_WEB_SITE    website name for the Blazor Web app (e.g. site77745)
+#   MONSTERASP_API_SITE    website name for the API (only if you use a 2nd site)
+#
+# App runtime config (written into appsettings.Production.json at deploy — never committed):
+#   DB_CONNECTION_STRING   the MSSQL connection string incl. password (from your MonsterASP DB)
+#   JWT_SECRET             a strong random secret, e.g. `openssl rand -base64 64`
+#   BASE_API_URL           the public URL of the deployed API (used by the Web app)
 
 name: Deploy to MonsterASP
 
@@ -38,6 +44,13 @@ jobs:
 
       - name: Publish Web
         run: dotnet publish src/Procoding.ApplicationTracker.Web.Root/Procoding.ApplicationTracker.Web.Root.csproj -c Release -o publish-web
+
+      - name: Inject production config (secret -> appsettings.Production.json)
+        shell: pwsh
+        env:
+          BASE_API_URL: ${{ secrets.BASE_API_URL }}
+        run: |
+          @{ BaseApiUrl = $env:BASE_API_URL } | ConvertTo-Json | Set-Content publish-web/appsettings.Production.json -Encoding utf8
 
       - name: Web Deploy -> MonsterASP
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0
@@ -62,6 +75,19 @@ jobs:
 
       - name: Publish API
         run: dotnet publish src/Procoding.ApplicationTracker.Api/Procoding.ApplicationTracker.Api.csproj -c Release -o publish-api
+
+      - name: Inject production config (secrets -> appsettings.Production.json)
+        shell: pwsh
+        env:
+          DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        run: |
+          @{
+            DatabaseProvider = "SqlServer"
+            ConnectionStrings = @{ JobApplicationDatabase = $env:DB_CONNECTION_STRING }
+            EmployeeJwtTokenSettings = @{ SecretKey = $env:JWT_SECRET }
+            CandidateJwtTokenSettings = @{ SecretKey = $env:JWT_SECRET }
+          } | ConvertTo-Json -Depth 5 | Set-Content publish-api/appsettings.Production.json -Encoding utf8
 
       - name: Web Deploy -> MonsterASP
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0
