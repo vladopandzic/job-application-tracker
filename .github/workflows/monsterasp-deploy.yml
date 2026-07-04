@@ -68,7 +68,9 @@ jobs:
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0
         with:
           website-name: ${{ secrets.MONSTERASP_WEB_SITE }}
-          server-computer-name: ${{ secrets.MONSTERASP_WEB_SERVER }}
+          # MonsterASP WebDeploy endpoint = full URL WITH scheme + IIS WMSvc port 8172.
+          # Built from the site id (siteXXXX) so a bare-host secret can't break it.
+          server-computer-name: https://${{ secrets.MONSTERASP_WEB_SITE }}.siteasp.net:8172
           server-username: ${{ secrets.MONSTERASP_WEB_USERNAME }}
           server-password: ${{ secrets.MONSTERASP_WEB_PASSWORD }}
           source-path: publish-web
@@ -103,7 +105,9 @@ jobs:
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0
         with:
           website-name: ${{ secrets.MONSTERASP_API_SITE }}
-          server-computer-name: ${{ secrets.MONSTERASP_API_SERVER }}
+          # MonsterASP WebDeploy endpoint = full URL WITH scheme + IIS WMSvc port 8172.
+          # Built from the site id (siteXXXX) so a bare-host secret can't break it.
+          server-computer-name: https://${{ secrets.MONSTERASP_API_SITE }}.siteasp.net:8172
           server-username: ${{ secrets.MONSTERASP_API_USERNAME }}
           server-password: ${{ secrets.MONSTERASP_API_PASSWORD }}
           source-path: publish-api
