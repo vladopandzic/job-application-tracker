@@ -51,7 +51,11 @@ public class AdminController : Controller
                 authenticationProperties.StoreTokens([new AuthenticationToken() { Name = "access_token", Value = result.Value.AccessToken },
                                                       new AuthenticationToken() { Name = "refresh_token", Value = result.Value.RefreshToken }]);
 
-                await HttpContext.SignInAsync( user);
+                await HttpContext.SignInAsync(user, new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30)
+                });
 
 
                 // Land the admin inside the app shell (authenticated home), not the public landing page.

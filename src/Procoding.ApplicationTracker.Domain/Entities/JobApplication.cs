@@ -112,6 +112,20 @@ public sealed class JobApplication : AggregateRoot, ISoftDeletableEntity, IAudit
         return this;
     }
 
+    /// <summary>Archives the application — keeps it but hides it from the active board/list.</summary>
+    public JobApplication Archive(TimeProvider timeProvider)
+    {
+        ArchivedOnUtc ??= timeProvider.GetUtcNow().UtcDateTime;
+        return this;
+    }
+
+    /// <summary>Restores an archived application back to the active board/list.</summary>
+    public JobApplication Unarchive()
+    {
+        ArchivedOnUtc = null;
+        return this;
+    }
+
     /// <summary>
     /// Adds a new step to the interview process of this job application (e.g. a phone screen or a
     /// technical interview) with its outcome and optional notes.
@@ -250,6 +264,9 @@ public sealed class JobApplication : AggregateRoot, ISoftDeletableEntity, IAudit
 
     /// <inheritdoc/>
     public DateTime? DeletedOnUtc { get; private set; }
+
+    /// <summary>When set, the application is archived — hidden from the board/list but not deleted.</summary>
+    public DateTime? ArchivedOnUtc { get; private set; }
 
     /// <inheritdoc/>
     public DateTime CreatedOnUtc { get; private set; }

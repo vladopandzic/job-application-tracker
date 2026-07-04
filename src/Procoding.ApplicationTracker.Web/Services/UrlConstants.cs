@@ -125,6 +125,21 @@ public static class UrlConstants
             return $"{GET_ALL_URL}/extract-from-text";
         }
 
+        public static string Archive(Guid id)
+        {
+            return $"{GET_ALL_URL}/{id}/archive";
+        }
+
+        public static string Unarchive(Guid id)
+        {
+            return $"{GET_ALL_URL}/{id}/unarchive";
+        }
+
+        public static string Delete(Guid id)
+        {
+            return $"{GET_ALL_URL}/{id}";
+        }
+
         public static string GetOne(Guid id)
         {
             return $"{GET_ALL_URL}/{id}";

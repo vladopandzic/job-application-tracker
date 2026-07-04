@@ -1,5 +1,6 @@
 ﻿using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using MudBlazor.Services;
 using Polly;
 using Procoding.ApplicationTracker.Application;
@@ -31,10 +32,19 @@ internal class Program
                                      services.AddScoped<AuthenticationStateProvider, RevalidatingServerAuthenticationState>();
                                      services.AddCascadingAuthenticationState();
 
+                                     // Persist Data Protection keys so the auth cookie survives app-pool
+                                     // recycles (otherwise the key ring regenerates and everyone is logged out).
+                                     services.AddDataProtection()
+                                             .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(AppContext.BaseDirectory, "dataprotection-keys")))
+                                             .SetApplicationName("JobTrek");
+
                                      services.AddAuthentication().AddCookie(x =>
                                      {
                                          x.LoginPath = "/login";
                                          x.AccessDeniedPath = "/no-access";
+                                         // Keep users signed in for a month, refreshed on activity.
+                                         x.ExpireTimeSpan = TimeSpan.FromDays(30);
+                                         x.SlidingExpiration = true;
                                      });
 
                                      services.AddAuthorization();

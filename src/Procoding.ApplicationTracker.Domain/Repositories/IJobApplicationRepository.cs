@@ -34,4 +34,9 @@ public interface IJobApplicationRepository
     /// <param name="obApplicationId"></param>
     /// <returns></returns>
     Task<JobApplication?> GetJobApplicationAsync(Guid obApplicationId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Removes the job application (soft delete — sets DeletedOnUtc on save).
+    /// </summary>
+    void Delete(JobApplication jobApplication);
 }

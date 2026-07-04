@@ -34,6 +34,8 @@ public static class IServiceCollectionExtensions
 
         services.AddTransient<JobApplicationsKanbanViewModel, JobApplicationsKanbanViewModel>();
 
+        services.AddTransient<ArchiveJobApplicationsViewModel, ArchiveJobApplicationsViewModel>();
+
         services.AddTransient<DashboardViewModel, DashboardViewModel>();
 
         services.AddTransient<Translations.TranslationsViewModel, Translations.TranslationsViewModel>();

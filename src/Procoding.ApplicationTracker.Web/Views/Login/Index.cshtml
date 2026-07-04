@@ -81,6 +81,11 @@
                     <input class="auth-input" type="password" name="Password" id="Password" value="@devPassword" placeholder="••••••••" />
                     @Html.ValidationMessageFor(a => a.Password, "", new { @class = "auth-error" })
 
+                    <label style="display:flex;align-items:center;gap:8px;margin:4px 0 2px;font-weight:400;cursor:pointer;">
+                        <input type="checkbox" name="RememberMe" value="true" checked style="width:16px;height:16px;" />
+                        @(lang == "en" ? "Keep me signed in" : "Zapamti me")
+                    </label>
+
                     <button type="submit" class="auth-btn">@Tr.T("auth.login.submit", lang)</button>
                 }
 

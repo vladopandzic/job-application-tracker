@@ -17,7 +17,7 @@ internal sealed class GetAllJobApplicationsQueryHandler : IQueryHandler<GetAllJo
 
     public async Task<JobApplicationListResponseDTO> Handle(GetAllJobApplicationsQuery request, CancellationToken cancellationToken)
     {
-        var specification = new Specifications.JobApplicationGetListSpecification(request.PageNumber, request.PageSize, request.Filters, request.Sort);
+        var specification = new Specifications.JobApplicationGetListSpecification(request.PageNumber, request.PageSize, request.Filters, request.Sort, request.Archived);
 
         var jobApplications = await _jobApplicationRepository.GetJobApplicationsAsync(specification, cancellationToken);
 

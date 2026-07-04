@@ -38,6 +38,15 @@ public interface IJobApplicationService
     /// </summary>
     Task<Result<ExtractedJobPostingResponseDTO>> ExtractJobPostingAsync(ExtractJobPostingRequestDTO request, CancellationToken cancellationToken = default);
 
+    /// <summary>Archives an application (hides it from the board/list, keeps it in the archive).</summary>
+    Task<Result<Guid>> ArchiveJobApplicationAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>Restores an archived application back to the active board/list.</summary>
+    Task<Result<Guid>> UnarchiveJobApplicationAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>Deletes an application (soft delete).</summary>
+    Task<Result<Guid>> DeleteJobApplicationAsync(Guid id, CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Updates one jobApplication.
     /// </summary>

@@ -49,6 +49,53 @@ html {
     box-shadow: 0 10px 30px rgba(79, 70, 229, 0.25);
 }
 
+.jf-header-inner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.jf-header-text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* One-line, ellipsised subtitle so it never wraps into the actions on narrow screens. */
+.jf-header-sub {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.jf-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+}
+
+/* Mobile: avatar + title stay on top, the status + buttons drop to their own full-width row. */
+@media (max-width: 640px) {
+    .jf-page-header {
+        padding: 16px;
+    }
+
+    .jf-header-inner {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .jf-header-text {
+        flex: 1 1 calc(100% - 68px);
+    }
+
+    .jf-header-actions {
+        flex: 1 1 100%;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+}
+
 .jf-avatar {
     width: 52px;
     height: 52px;

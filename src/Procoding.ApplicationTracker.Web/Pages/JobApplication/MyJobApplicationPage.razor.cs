@@ -22,6 +22,9 @@ public partial class MyJobApplicationPage : IDisposable
     [Inject]
     public LocalizationService Loc { get; set; } = default!;
 
+    [Inject]
+    public NavigationManager NavigationManager { get; set; } = default!;
+
     [Parameter]
     public string Id { get; set; }
 
@@ -106,6 +109,16 @@ public partial class MyJobApplicationPage : IDisposable
     }
 
     private void OpenEditDetails() => ViewModel.EditDetailsDialogVisible = true;
+
+    private async Task ArchiveApplication()
+    {
+        var ok = await ViewModel.ArchiveAsync();
+        if (ok)
+        {
+            Snackbar.Add("Prijava arhivirana.", Severity.Success);
+            NavigationManager.NavigateTo("/my-job-applications");
+        }
+    }
 
     private async Task ImportFromAi()
     {

@@ -40,4 +40,10 @@ internal sealed class JobApplicationRepository : IJobApplicationRepository
     {
         await _dbContext.JobApplications.AddAsync(jobApplication, cancellationToken);
     }
+
+    public void Delete(JobApplication jobApplication)
+    {
+        // Soft delete: SaveChangesAsync converts the Remove into setting DeletedOnUtc.
+        _dbContext.JobApplications.Remove(jobApplication);
+    }
 }

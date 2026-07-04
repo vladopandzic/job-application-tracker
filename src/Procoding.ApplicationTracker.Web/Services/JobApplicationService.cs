@@ -59,6 +59,33 @@ public class JobApplicationService : IJobApplicationService
         return await response.HandleResponseAsync<ExtractedJobPostingResponseDTO>(cancellationToken);
     }
 
+    public async Task<Result<Guid>> ArchiveJobApplicationAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        await Authorize();
+
+        var response = await _httpClient.PostAsync(UrlConstants.JobApplications.Archive(id), null, cancellationToken);
+
+        return await response.HandleResponseAsync<Guid>(cancellationToken);
+    }
+
+    public async Task<Result<Guid>> UnarchiveJobApplicationAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        await Authorize();
+
+        var response = await _httpClient.PostAsync(UrlConstants.JobApplications.Unarchive(id), null, cancellationToken);
+
+        return await response.HandleResponseAsync<Guid>(cancellationToken);
+    }
+
+    public async Task<Result<Guid>> DeleteJobApplicationAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        await Authorize();
+
+        var response = await _httpClient.DeleteAsync(UrlConstants.JobApplications.Delete(id), cancellationToken);
+
+        return await response.HandleResponseAsync<Guid>(cancellationToken);
+    }
+
     public async Task<Result<JobApplicationUpdatedResponseDTO>> UpdateJobApplicationAsync(JobApplicationUpdateRequestDTO request,
                                                                                           CancellationToken cancellationToken = default)
     {

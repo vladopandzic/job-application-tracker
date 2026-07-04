@@ -24,6 +24,27 @@
 
     <script src="_framework/blazor.web.js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script>
+        // Blazor Server: backgrounding the tab on mobile drops the SignalR circuit. When reconnection
+        // ultimately fails/rejects, reload to a fresh working page instead of leaving the user stuck on
+        // the "Attempting to reconnect…" overlay.
+        (function () {
+            function watch(modal) {
+                new MutationObserver(function () {
+                    if (modal.classList.contains('components-reconnect-failed') ||
+                        modal.classList.contains('components-reconnect-rejected')) {
+                        location.reload();
+                    }
+                }).observe(modal, { attributes: true, attributeFilter: ['class'] });
+            }
+            var existing = document.getElementById('components-reconnect-modal');
+            if (existing) { watch(existing); return; }
+            new MutationObserver(function (muts, obs) {
+                var m = document.getElementById('components-reconnect-modal');
+                if (m) { watch(m); obs.disconnect(); }
+            }).observe(document.documentElement, { childList: true, subtree: true });
+        })();
+    </script>
     @code {
         [CascadingParameter]
         private HttpContext HttpContext { get; set; } = default!;

@@ -45,7 +45,13 @@ public class LoginController : Controller
                 var identity = new ClaimsIdentity(claims, authenticationType: "CookieAuth");
                 var user = new ClaimsPrincipal(identity);
 
-                await HttpContext.SignInAsync(user);
+                // "Remember me" (checkbox, default on) → a persistent cookie that survives browser restarts.
+                var rememberMe = Request.Form["RememberMe"].Count > 0;
+                await HttpContext.SignInAsync(user, new AuthenticationProperties
+                {
+                    IsPersistent = rememberMe,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30)
+                });
                 return Redirect("/home");
             }
             // Surface the API's message (e.g. "email not confirmed") instead of a generic one.

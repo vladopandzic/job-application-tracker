@@ -34,6 +34,7 @@ public class GetAllJobApplicationsEndpoint : EndpointBaseAsync.WithRequest<JobAp
                                                           {
                                                               SortBy = x.SortBy,
                                                               Descending = x.Descending
-                                                          }).ToList()), cancellationToken);
+                                                          }).ToList(),
+                                                          archived: request.Archived), cancellationToken);
     }
 }

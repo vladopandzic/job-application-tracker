@@ -261,6 +261,26 @@ public class MyJobApplicationViewModel : EditViewModelBase
         return result.IsSuccess;
     }
 
+    /// <summary>Archives the current application. Returns true on success.</summary>
+    public async Task<bool> ArchiveAsync(CancellationToken cancellationToken = default)
+    {
+        if (JobApplication is null || JobApplication.Id == Guid.Empty)
+        {
+            return false;
+        }
+
+        IsSaving = true;
+        var result = await _jobApplicationService.ArchiveJobApplicationAsync(JobApplication.Id, cancellationToken);
+        IsSaving = false;
+
+        if (result.IsFailed)
+        {
+            _notificationService.ShowMessageFromResult(result);
+        }
+
+        return result.IsSuccess;
+    }
+
     public async Task SaveNewCompany()
     {
         var isCompanyValid = (await CompanyValidator.ValidateAsync(NewCompany!)).IsValid;

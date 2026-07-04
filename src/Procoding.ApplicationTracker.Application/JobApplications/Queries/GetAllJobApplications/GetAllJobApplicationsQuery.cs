@@ -6,12 +6,13 @@ namespace Procoding.ApplicationTracker.Application.JobApplications.Queries.GetAl
 
 public sealed class GetAllJobApplicationsQuery : IQuery<JobApplicationListResponseDTO>
 {
-    public GetAllJobApplicationsQuery(int? pageNumber, int? pageSize, List<Filter> filters, List<Sort> sort)
+    public GetAllJobApplicationsQuery(int? pageNumber, int? pageSize, List<Filter> filters, List<Sort> sort, bool archived = false)
     {
         PageNumber = pageNumber;
         PageSize = pageSize;
         Filters = filters;
         Sort = sort;
+        Archived = archived;
     }
 
     public int? PageNumber { get; set; }
@@ -21,4 +22,6 @@ public sealed class GetAllJobApplicationsQuery : IQuery<JobApplicationListRespon
     public List<Filter> Filters { get; set; }
 
     public List<Sort> Sort { get; set; }
+
+    public bool Archived { get; set; }
 }

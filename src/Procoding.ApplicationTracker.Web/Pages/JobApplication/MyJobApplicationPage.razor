@@ -15,22 +15,28 @@
 else if (ViewModel.JobApplication is not null)
 {
     <div class="jf-page-header mb-4">
-        <div class="d-flex align-center" style="gap:16px;">
+        <div class="jf-header-inner">
             <div class="jf-avatar">@CompanyInitial</div>
-            <div style="flex:1;min-width:0;">
-                <MudText Typo="Typo.h5" Style="font-weight:700;color:#fff;">@HeaderTitle</MudText>
-                <MudText Typo="Typo.body2" Style="color:rgba(255,255,255,0.85);">@HeaderSubtitle</MudText>
+            <div class="jf-header-text">
+                <MudText Typo="Typo.h5" Style="font-weight:700;color:#fff;" Class="jf-header-title">@HeaderTitle</MudText>
+                <MudText Typo="Typo.body2" Style="color:rgba(255,255,255,0.85);" Class="jf-header-sub">@HeaderSubtitle</MudText>
             </div>
-            @if (ViewModel.JobApplication!.Id != Guid.Empty && !string.IsNullOrWhiteSpace(ViewModel.JobApplication.Status))
-            {
-                <select class="jf-status-select-header" @onchange="@(e => ChangeStatus(e.Value?.ToString()))" title="@Loc.T("board.move")">
-                    @foreach (var st in AllStatuses)
-                    {
-                        <option value="@st" selected="@(st == ViewModel.JobApplication.Status)">@Loc.T(StatusKey(st))</option>
-                    }
-                </select>
-            }
-            <MudButton OnClick="OpenEditDetails" Disabled="ViewModel.IsSaving" StartIcon="@Icons.Material.Filled.Edit" Variant="Variant.Filled" Style="background:#fff;color:#4F46E5;font-weight:600;">@(ViewModel.JobApplication!.Id == Guid.Empty ? Loc.T("detail.addDetails") : Loc.T("detail.editDetails"))</MudButton>
+            <div class="jf-header-actions">
+                @if (ViewModel.JobApplication!.Id != Guid.Empty && !string.IsNullOrWhiteSpace(ViewModel.JobApplication.Status))
+                {
+                    <select class="jf-status-select-header" @onchange="@(e => ChangeStatus(e.Value?.ToString()))" title="@Loc.T("board.move")">
+                        @foreach (var st in AllStatuses)
+                        {
+                            <option value="@st" selected="@(st == ViewModel.JobApplication.Status)">@Loc.T(StatusKey(st))</option>
+                        }
+                    </select>
+                }
+                @if (ViewModel.JobApplication!.Id != Guid.Empty)
+                {
+                    <MudButton OnClick="ArchiveApplication" Disabled="ViewModel.IsSaving" StartIcon="@Icons.Material.Outlined.Archive" Variant="Variant.Text" Style="color:#fff;font-weight:600;">Arhiviraj</MudButton>
+                }
+                <MudButton OnClick="OpenEditDetails" Disabled="ViewModel.IsSaving" StartIcon="@Icons.Material.Filled.Edit" Variant="Variant.Filled" Style="background:#fff;color:#4F46E5;font-weight:600;">@(ViewModel.JobApplication!.Id == Guid.Empty ? Loc.T("detail.addDetails") : Loc.T("detail.editDetails"))</MudButton>
+            </div>
         </div>
     </div>
     <MudDialog IsVisible="ViewModel.EditDetailsDialogVisible"
