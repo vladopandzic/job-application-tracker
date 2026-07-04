@@ -138,15 +138,69 @@ public class MyJobApplicationViewModel : EditViewModelBase
         PageTitle = JobApplication?.Id == Guid.Empty ? "New job application" : $"Job application for {JobApplication?.Company?.CompanyName}";
     }
 
+    /// <summary>
+    /// Resolves the chosen company before saving: reuses an existing one by name, or creates a new one
+    /// on the fly from the typed/AI-filled name + website — so the user never needs the separate
+    /// "create company" dialog. Falls back to that dialog only when a new company has no website
+    /// (the domain requires a valid URL). Returns false when the save should pause for that input.
+    /// </summary>
+    private async Task<bool> EnsureCompanyAsync()
+    {
+        var company = JobApplication?.Company;
+
+        if (company is null || string.IsNullOrWhiteSpace(company.CompanyName) || company.Id != Guid.Empty)
+        {
+            return true; // nothing typed, or already a persisted company
+        }
+
+        var existing = Companies.FirstOrDefault(c => string.Equals(c.CompanyName, company.CompanyName, StringComparison.OrdinalIgnoreCase));
+        if (existing is not null)
+        {
+            JobApplication!.Company = existing;
+            return true;
+        }
+
+        var website = Validators.FluentValidationExtensions.NormalizeUrl(company.OfficialWebSiteLink);
+        if (string.IsNullOrWhiteSpace(website))
+        {
+            // New company but no website to satisfy the domain — let the user supply it in the dialog.
+            NewCompany = new CompanyDTO(Guid.Empty, company.CompanyName, string.Empty);
+            CreateNewCompanyDialogVisible = true;
+            return false;
+        }
+
+        var result = await _companyService.InsertCompanyAsync(new CompanyInsertRequestDTO(company.CompanyName, website));
+        if (result.IsSuccess)
+        {
+            Companies.Add(result.Value.Company);
+            JobApplication!.Company = result.Value.Company;
+            return true;
+        }
+
+        // Backend rejected it (e.g. invalid URL) — fall back to the dialog so the user can fix it.
+        NewCompany = new CompanyDTO(Guid.Empty, company.CompanyName, company.OfficialWebSiteLink);
+        CreateNewCompanyDialogVisible = true;
+        _notificationService.ShowMessageFromResult(result);
+        return false;
+    }
+
     public async Task SaveAsync()
     {
+        IsSaving = true;
+
+        if (!await EnsureCompanyAsync())
+        {
+            IsSaving = false;
+            return; // paused: company needs completing in the dialog first
+        }
+
         var isJobApplicationValid = (await Validator.ValidateAsync(JobApplication!)).IsValid;
 
         if (!isJobApplicationValid)
         {
+            IsSaving = false;
             return;
         }
-        IsSaving = true;
 
         // Prepend https:// when the user typed a scheme-less link so the stored URL is clickable.
         JobApplication!.JobAdLink = Validators.FluentValidationExtensions.NormalizeUrl(JobApplication.JobAdLink);
@@ -271,6 +325,11 @@ public class MyJobApplicationViewModel : EditViewModelBase
             JobApplication.Description = extracted.Description.Length > 500 ? extracted.Description[..500] : extracted.Description;
         }
 
+        if (!string.IsNullOrWhiteSpace(extracted.JobAdLink))
+        {
+            JobApplication.JobAdLink = extracted.JobAdLink;
+        }
+
         if (!string.IsNullOrWhiteSpace(extracted.JobType))
         {
             var match = JobTypes.FirstOrDefault(t => string.Equals(t.Value, extracted.JobType, StringComparison.OrdinalIgnoreCase));
@@ -298,7 +357,9 @@ public class MyJobApplicationViewModel : EditViewModelBase
             }
             else
             {
-                // Pre-fill the "create new company" fields so the user can add it in one click.
+                // Show the name in the field right away; the company is created automatically on save
+                // (EnsureCompanyAsync) using the extracted website — no separate dialog needed.
+                JobApplication.Company = new CompanyDTO(Guid.Empty, extracted.CompanyName, extracted.CompanyWebsite ?? string.Empty);
                 NewCompany = new CompanyDTO(Guid.Empty, extracted.CompanyName, extracted.CompanyWebsite ?? string.Empty);
             }
         }

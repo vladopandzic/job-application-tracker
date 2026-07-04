@@ -17,4 +17,6 @@ public sealed class ExtractedJobPostingResponseDTO
     public string Description { get; set; } = string.Empty;
 
     public string? CompanyWebsite { get; set; }
+
+    public string? JobAdLink { get; set; }
 }

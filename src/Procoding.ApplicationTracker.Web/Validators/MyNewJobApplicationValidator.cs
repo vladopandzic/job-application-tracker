@@ -8,16 +8,15 @@ public class MyNewJobApplicationValidator : FluentValueValidator<JobApplicationD
     public MyNewJobApplicationValidator()
     {
 
+        // A company just needs a name — if it isn't in the list yet it's created automatically on save,
+        // so the user never has to open a separate "create company" dialog.
         RuleFor(x => x.Company).NotEmpty().WithMessage("Tvrtka je obavezna.");
 
         RuleFor(x => x.Company).Custom((company, context) =>
         {
-            if (company is not null)
+            if (company is not null && string.IsNullOrWhiteSpace(company.CompanyName))
             {
-                if (string.IsNullOrEmpty(company.CompanyName) || company.Id == Guid.Empty)
-                {
-                    context.AddFailure("Odaberi tvrtku s popisa.");
-                }
+                context.AddFailure("Unesi ili odaberi tvrtku.");
             }
         });
 

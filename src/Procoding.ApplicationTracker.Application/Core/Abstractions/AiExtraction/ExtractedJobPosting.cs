@@ -11,4 +11,5 @@ public sealed record ExtractedJobPosting(
     string? JobType,
     string? WorkLocationType,
     string Description,
-    string? CompanyWebsite);
+    string? CompanyWebsite,
+    string? JobAdLink);

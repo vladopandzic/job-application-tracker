@@ -33,7 +33,8 @@ internal sealed class ExtractJobPostingFromTextCommandHandler
             JobType = extracted.JobType,
             WorkLocationType = extracted.WorkLocationType,
             Description = extracted.Description,
-            CompanyWebsite = extracted.CompanyWebsite
+            CompanyWebsite = extracted.CompanyWebsite,
+            JobAdLink = extracted.JobAdLink
         };
     }
 }

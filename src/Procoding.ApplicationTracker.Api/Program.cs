@@ -170,6 +170,13 @@ public class Program
             await TranslationSeeder.SeedAsync(translationDb);
         }
 
+        // Common lookup data (popular job application sources) so the UI is usable out of the box.
+        using (var referenceScope = app.Services.CreateScope())
+        {
+            var referenceDb = referenceScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            await ReferenceDataSeeder.SeedAsync(referenceDb);
+        }
+
         // Production admin bootstrap — creates the admin employee from configuration (secrets), never
         // from hardcoded credentials. No-op if not configured or the account already exists.
         using (var adminScope = app.Services.CreateScope())

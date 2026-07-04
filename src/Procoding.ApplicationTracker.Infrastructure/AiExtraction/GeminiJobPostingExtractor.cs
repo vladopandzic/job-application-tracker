@@ -44,7 +44,9 @@ internal sealed class GeminiJobPostingExtractor : IJobPostingExtractor
             "\"jobType\" (one of \"FullTime\",\"PartTime\",\"Contract\",\"Temporary\",\"Volunteer\", or null), " +
             "\"workLocationType\" (one of \"Remote\",\"OnSite\",\"Hybrid\", or null), " +
             "\"description\" (a concise summary in the posting's original language), " +
-            "\"companyWebsite\" (string URL or null). Use null when a field is not stated. Do not invent values.";
+            "\"companyWebsite\" (the company's website URL or null), " +
+            "\"jobAdLink\" (the direct URL to this job posting / application page if present in the text, else null). " +
+            "Use null when a field is not stated. Do not invent values.";
 
         var requestBody = new
         {
@@ -93,7 +95,8 @@ internal sealed class GeminiJobPostingExtractor : IJobPostingExtractor
                 JobType: Normalize(parsed.JobType),
                 WorkLocationType: Normalize(parsed.WorkLocationType),
                 Description: parsed.Description ?? string.Empty,
-                CompanyWebsite: Normalize(parsed.CompanyWebsite));
+                CompanyWebsite: Normalize(parsed.CompanyWebsite),
+                JobAdLink: Normalize(parsed.JobAdLink));
         }
         catch (Exception ex)
         {
@@ -113,5 +116,6 @@ internal sealed class GeminiJobPostingExtractor : IJobPostingExtractor
         public string? WorkLocationType { get; set; }
         public string? Description { get; set; }
         public string? CompanyWebsite { get; set; }
+        public string? JobAdLink { get; set; }
     }
 }
