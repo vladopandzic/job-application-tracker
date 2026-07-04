@@ -19,17 +19,17 @@
         <MudIcon Icon="@Icons.Material.Filled.Timeline" Color="Color.Primary" Class="mr-2" />
         <MudText Typo="Typo.h6" Style="font-weight:700">@Branding.Name</MudText>
         <MudSpacer />
-        <MudMenu Dense="true" AnchorOrigin="Origin.BottomLeft" Class="mr-1">
-            <ActivatorContent>
-                <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.Language" Size="Size.Small">@Loc.CurrentLanguage.ToUpperInvariant()</MudButton>
-            </ActivatorContent>
-            <ChildContent>
-                @foreach (var lang in Loc.Languages)
-                {
-                    <MudMenuItem OnClick="@(() => ChangeLanguage(lang.Code))">@lang.Label</MudMenuItem>
-                }
-            </ChildContent>
-        </MudMenu>
+        @* Plain buttons (not a MudMenu) — a dropdown menu's items don't reliably fire on mobile touch. *@
+        <div class="d-flex align-center mr-1" style="gap:2px;">
+            @foreach (var lang in Loc.Languages)
+            {
+                <MudButton Variant="@(string.Equals(lang.Code, Loc.CurrentLanguage, StringComparison.OrdinalIgnoreCase) ? Variant.Filled : Variant.Text)"
+                           Color="Color.Inherit"
+                           Size="Size.Small"
+                           Style="min-width:36px;padding:2px 8px;"
+                           OnClick="@(() => ChangeLanguage(lang.Code))">@lang.Code.ToUpperInvariant()</MudButton>
+            }
+        </div>
         <MudText Typo="Typo.body2" Class="mr-3 mud-text-secondary d-none d-sm-flex">@Name</MudText>
         <MudIconButton Href="/logout"
                        Icon="@Icons.Material.Outlined.Logout"
