@@ -139,11 +139,11 @@ public class Program
         }).AddJwtCreator<Candidate>(builder.Configuration, "CandidateJwtTokenSettings");
 
 
-        // Persist Data Protection keys to disk so Identity tokens (email confirmation, password reset)
-        // survive app-pool recycles on IIS/MonsterASP. Without this the key ring is regenerated on
-        // restart and previously-sent confirmation links stop validating.
+        // Persist Data Protection keys in the DATABASE so Identity tokens (email confirmation, password
+        // reset) survive not just app-pool recycles but full redeploys — a filesystem key ring under the
+        // app folder is wiped every deploy. The Web host shares the same key ring the same way.
         builder.Services.AddDataProtection()
-                        .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "dataprotection-keys")))
+                        .PersistKeysToDbContext<ApplicationDbContext>()
                         .SetApplicationName("JobTrek");
 
         builder.Services.AddAuthorization(options =>

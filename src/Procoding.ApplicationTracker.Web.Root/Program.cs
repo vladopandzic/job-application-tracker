@@ -1,6 +1,8 @@
 ﻿using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.EntityFrameworkCore;
+using Procoding.ApplicationTracker.Infrastructure.Data;
 using MudBlazor.Services;
 using Polly;
 using Procoding.ApplicationTracker.Application;
@@ -32,11 +34,20 @@ internal class Program
                                      services.AddScoped<AuthenticationStateProvider, RevalidatingServerAuthenticationState>();
                                      services.AddCascadingAuthenticationState();
 
-                                     // Persist Data Protection keys so the auth cookie survives app-pool
-                                     // recycles (otherwise the key ring regenerates and everyone is logged out).
-                                     services.AddDataProtection()
-                                             .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(AppContext.BaseDirectory, "dataprotection-keys")))
-                                             .SetApplicationName("JobTrek");
+                                     // Persist Data Protection keys so the auth cookie survives recycles AND
+                                     // full redeploys. In prod the keys go to the shared DB (same key ring as
+                                     // the API, created by its migration); locally we fall back to the filesystem.
+                                     var dataProtection = services.AddDataProtection().SetApplicationName("JobTrek");
+                                     var dpConnectionString = configuration.GetConnectionString("JobApplicationDatabase");
+                                     if (!string.IsNullOrWhiteSpace(dpConnectionString))
+                                     {
+                                         services.AddDbContext<DataProtectionKeysDbContext>(o => o.UseSqlServer(dpConnectionString));
+                                         dataProtection.PersistKeysToDbContext<DataProtectionKeysDbContext>();
+                                     }
+                                     else
+                                     {
+                                         dataProtection.PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(AppContext.BaseDirectory, "dataprotection-keys")));
+                                     }
 
                                      services.AddAuthentication().AddCookie(x =>
                                      {

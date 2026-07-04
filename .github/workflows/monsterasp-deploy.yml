@@ -68,8 +68,12 @@ jobs:
         shell: pwsh
         env:
           BASE_API_URL: ${{ secrets.BASE_API_URL }}
+          DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
         run: |
-          @{ BaseApiUrl = $env:BASE_API_URL } | ConvertTo-Json | Set-Content publish-web/appsettings.Production.json -Encoding utf8
+          @{
+            BaseApiUrl = $env:BASE_API_URL
+            ConnectionStrings = @{ JobApplicationDatabase = $env:DB_CONNECTION_STRING }
+          } | ConvertTo-Json -Depth 5 | Set-Content publish-web/appsettings.Production.json -Encoding utf8
 
       - name: Web Deploy -> MonsterASP (Web)
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0

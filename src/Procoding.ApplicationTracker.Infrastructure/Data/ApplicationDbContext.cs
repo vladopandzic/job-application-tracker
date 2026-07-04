@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Procoding.ApplicationTracker.Domain.Abstractions;
 using Procoding.ApplicationTracker.Domain.Auth;
@@ -7,7 +8,7 @@ using System.Reflection;
 
 namespace Procoding.ApplicationTracker.Infrastructure.Data;
 
-public class ApplicationDbContext : DbContext, IUnitOfWork
+public class ApplicationDbContext : DbContext, IUnitOfWork, IDataProtectionKeyContext
 {
     private readonly TimeProvider _timeProvider;
     private readonly IIdentityContext _identityContext;
@@ -31,6 +32,9 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     public DbSet<Translation> Translations { get; set; }
+
+    /// <summary>Data Protection keys — persisted in the DB so auth cookies survive redeploys/recycles.</summary>
+    public DbSet<Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey> DataProtectionKeys { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
