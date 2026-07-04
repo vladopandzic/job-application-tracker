@@ -54,7 +54,8 @@ public class AdminController : Controller
                 await HttpContext.SignInAsync( user);
 
 
-                return Redirect("/");
+                // Land the admin inside the app shell (authenticated home), not the public landing page.
+                return Redirect("/home");
             }
             ModelState.AddModelError(string.Empty, "Invalid login attempt.");
         }
