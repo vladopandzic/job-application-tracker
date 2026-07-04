@@ -160,9 +160,11 @@ public class Program
         // from hardcoded credentials. No-op if not configured or the account already exists.
         using (var adminScope = app.Services.CreateScope())
         {
+            var adminDb = adminScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var adminEmployeeManager = adminScope.ServiceProvider.GetRequiredService<UserManager<Employee>>();
             var adminSection = app.Configuration.GetSection("SeedAdmin");
-            await AdminSeeder.SeedAsync(adminEmployeeManager,
+            await AdminSeeder.SeedAsync(adminDb,
+                                        adminEmployeeManager,
                                         adminSection["Email"],
                                         adminSection["Password"],
                                         adminSection["FirstName"],

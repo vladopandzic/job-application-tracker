@@ -12,7 +12,8 @@ namespace Procoding.ApplicationTracker.Infrastructure.Data;
 /// </summary>
 public static class AdminSeeder
 {
-    public static async Task SeedAsync(UserManager<Employee> employeeManager,
+    public static async Task SeedAsync(ApplicationDbContext db,
+                                       UserManager<Employee> employeeManager,
                                        string? email,
                                        string? password,
                                        string? firstName,
@@ -36,6 +37,12 @@ public static class AdminSeeder
                                        password,
                                        employeeManager.PasswordHasher);
 
-        await employeeManager.CreateAsync(employee);
+        // CreateAsync sets NormalizedUserName/NormalizedEmail (so login's FindByEmailAsync works) but the
+        // custom EmployeeUserStore has AutoSaveChanges = false, so it only tracks the entity — persist it.
+        var result = await employeeManager.CreateAsync(employee);
+        if (result.Succeeded)
+        {
+            await db.SaveChangesAsync();
+        }
     }
 }
