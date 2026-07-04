@@ -48,8 +48,9 @@ public static class DevDataSeeder
         var employee = Employee.Create(Guid.NewGuid(), "Demo", "Admin", new Email(DemoEmployeeEmail), DemoEmployeePassword, employeeManager.PasswordHasher);
         await employeeManager.CreateAsync(employee);
 
-        // Demo candidate (the B2C user).
+        // Demo candidate (the B2C user). Pre-confirmed so local login works without the email flow.
         var candidate = Candidate.Create(Guid.NewGuid(), "Demo", "Candidate", new Email(DemoCandidateEmail), DemoCandidatePassword, candidateManager.PasswordHasher);
+        candidate.EmailConfirmed = true;
         await candidateManager.CreateAsync(candidate);
 
         JobApplication Make(string title, int companyIndex, int sourceIndex, WorkLocationType location, JobType type, params JobApplicationStatus[] transitions)

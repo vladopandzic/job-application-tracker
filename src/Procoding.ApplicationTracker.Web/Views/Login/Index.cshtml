@@ -49,6 +49,24 @@
                 {
                     <div class="auth-note">@Tr.T("auth.login.accountCreated", lang)</div>
                 }
+                @if (Context.Request.Query["confirmEmail"] == "1")
+                {
+                    <div class="auth-note">@(lang == "en"
+                        ? "Almost there! Check your email (inbox and spam) and click the confirmation link before signing in."
+                        : "Još samo korak! Provjeri email (inbox i spam) i klikni potvrdni link prije prijave.")</div>
+                }
+                @if (Context.Request.Query["confirmed"] == "1")
+                {
+                    <div class="auth-note">@(lang == "en"
+                        ? "Email confirmed — you can sign in now. ✅"
+                        : "Email potvrđen — sada se možeš prijaviti. ✅")</div>
+                }
+                @if (Context.Request.Query["confirmError"] == "1")
+                {
+                    <div class="auth-error">@(lang == "en"
+                        ? "Confirmation link is invalid or has expired. Try signing in to request a new one."
+                        : "Potvrdni link nije važeći ili je istekao.")</div>
+                }
 
                 @using (Html.BeginForm("Login", "Login", FormMethod.Post, new { @class = "auth-form" }))
                 {

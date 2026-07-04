@@ -75,11 +75,13 @@ public class Program
 
         builder.Services.AddIdentityCore<Employee>()
                         .AddUserStore<EmployeeUserStore>()
-                        .AddEntityFrameworkStores<ApplicationDbContext>();
+                        .AddEntityFrameworkStores<ApplicationDbContext>()
+                        .AddDefaultTokenProviders();
 
         builder.Services.AddIdentityCore<Candidate>()
                         .AddUserStore<CandidateUserStore>()
-                        .AddEntityFrameworkStores<ApplicationDbContext>();
+                        .AddEntityFrameworkStores<ApplicationDbContext>()
+                        .AddDefaultTokenProviders();
 
 
 

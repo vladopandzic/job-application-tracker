@@ -1,4 +1,5 @@
-﻿using LanguageExt.Common;
+﻿using FluentValidation;
+using LanguageExt.Common;
 using Microsoft.AspNetCore.Identity;
 using Procoding.ApplicationTracker.Application.Authentication.Claims;
 using Procoding.ApplicationTracker.Application.Authentication.JwtTokens;
@@ -43,6 +44,15 @@ internal sealed class LoginCandidateCommandHandler : ICommandHandler<LoginCandid
         if (candidate is null || candidate.DeletedOnUtc is not null || await _userManager.CheckPasswordAsync(candidate, request.Password) == false)
         {
             return new Result<CandidateLoginResponseDTO>(new Unauthorized401Exception("Invalid username or password"));
+        }
+
+        // Gate: the account must have a confirmed email before it can sign in.
+        if (!candidate.EmailConfirmed)
+        {
+            return new Result<CandidateLoginResponseDTO>(new ValidationException(new[]
+            {
+                new FluentValidation.Results.ValidationFailure("Email", "Vaš email još nije potvrđen. Provjerite inbox i spam za potvrdni link.")
+            }));
         }
 
         var claims = ClaimsFactory.CreateClaims(userEmail: candidate.Email.ToString()!,

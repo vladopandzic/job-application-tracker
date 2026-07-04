@@ -48,7 +48,9 @@ public class LoginController : Controller
                 await HttpContext.SignInAsync(user);
                 return Redirect("/home");
             }
-            ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+            // Surface the API's message (e.g. "email not confirmed") instead of a generic one.
+            var message = result.Errors.FirstOrDefault()?.Message;
+            ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(message) ? "Invalid login attempt." : message);
         }
         return View("Index", model);
     }

@@ -29,7 +29,8 @@ public class SignupController : Controller
             var result = await _authService.SignupCandidate(model, cancellationToken);
             if (result.IsSuccess)
             {
-                return Redirect("/Login?registered=1");
+                // Account created but not yet usable — the user must confirm their email first.
+                return Redirect("/Login?confirmEmail=1");
             }
 
             ModelState.AddModelError(string.Empty, string.Join(Environment.NewLine, result.Errors.Select(x => x.Message)));
