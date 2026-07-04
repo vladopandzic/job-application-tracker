@@ -127,7 +127,7 @@ jobs:
               FromName = "JobTrek"
               UseStartTls = $true
             }
-            Gemini = @{ ApiKey = $env:GEMINI_API_KEY; Model = "gemini-2.0-flash" }
+            Gemini = @{ ApiKey = $env:GEMINI_API_KEY; Model = "gemini-2.5-flash" }
           } | ConvertTo-Json -Depth 5 | Set-Content publish-api/appsettings.Production.json -Encoding utf8
 
       - name: Web Deploy -> MonsterASP (API)

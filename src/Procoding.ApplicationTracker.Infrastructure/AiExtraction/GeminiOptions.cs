@@ -11,5 +11,5 @@ public sealed class GeminiOptions
     public string ApiKey { get; set; } = string.Empty;
 
     /// <summary>Free-tier Flash model by default; overridable without a code change.</summary>
-    public string Model { get; set; } = "gemini-2.0-flash";
+    public string Model { get; set; } = "gemini-2.5-flash";
 }
