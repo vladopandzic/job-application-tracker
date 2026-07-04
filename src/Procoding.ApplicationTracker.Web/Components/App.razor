@@ -25,23 +25,43 @@
     <script src="_framework/blazor.web.js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
     <script>
-        // Blazor Server: backgrounding the tab on mobile drops the SignalR circuit. When reconnection
-        // ultimately fails/rejects, reload to a fresh working page instead of leaving the user stuck on
-        // the "Attempting to reconnect…" overlay.
+        // Blazor Server: backgrounding the tab on mobile drops the SignalR circuit. Instead of leaving the
+        // user staring at "Attempting to reconnect… 2 of 8", reload to a fresh working page fast:
+        //   - immediately if reconnection failed/was rejected (circuit gone),
+        //   - immediately when the tab becomes visible again while the reconnect overlay is up,
+        //   - otherwise after a short grace period if it's still trying (a quick blip that recovers is spared).
         (function () {
-            function watch(modal) {
-                new MutationObserver(function () {
-                    if (modal.classList.contains('components-reconnect-failed') ||
-                        modal.classList.contains('components-reconnect-rejected')) {
-                        location.reload();
-                    }
-                }).observe(modal, { attributes: true, attributeFilter: ['class'] });
+            var modal = null, timer = null;
+            function showing() {
+                return modal && (modal.classList.contains('components-reconnect-show') ||
+                                 modal.classList.contains('components-reconnect-failed') ||
+                                 modal.classList.contains('components-reconnect-rejected'));
             }
-            var existing = document.getElementById('components-reconnect-modal');
-            if (existing) { watch(existing); return; }
+            function cancel() { if (timer) { clearTimeout(timer); timer = null; } }
+            function evaluate() {
+                if (!modal) return;
+                var c = modal.classList;
+                if (c.contains('components-reconnect-failed') || c.contains('components-reconnect-rejected')) {
+                    location.reload();
+                } else if (c.contains('components-reconnect-show')) {
+                    if (!timer) { timer = setTimeout(function () { location.reload(); }, 1500); }
+                } else {
+                    cancel();
+                }
+            }
+            function attach(m) {
+                modal = m;
+                new MutationObserver(evaluate).observe(m, { attributes: true, attributeFilter: ['class'] });
+                evaluate();
+            }
+            document.addEventListener('visibilitychange', function () {
+                if (document.visibilityState === 'visible' && showing()) { location.reload(); }
+            });
+            var found = document.getElementById('components-reconnect-modal');
+            if (found) { attach(found); return; }
             new MutationObserver(function (muts, obs) {
                 var m = document.getElementById('components-reconnect-modal');
-                if (m) { watch(m); obs.disconnect(); }
+                if (m) { attach(m); obs.disconnect(); }
             }).observe(document.documentElement, { childList: true, subtree: true });
         })();
     </script>
