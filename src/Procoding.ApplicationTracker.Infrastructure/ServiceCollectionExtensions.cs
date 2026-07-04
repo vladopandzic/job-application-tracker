@@ -1,10 +1,12 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Procoding.ApplicationTracker.Application.Core.Abstractions.AiExtraction;
 using Procoding.ApplicationTracker.Application.Core.Abstractions.Emailing;
 using Procoding.ApplicationTracker.Domain.Abstractions;
 using Procoding.ApplicationTracker.Domain.Auth;
 using Procoding.ApplicationTracker.Domain.Repositories;
 using Procoding.ApplicationTracker.Infrastructure.Authentication;
+using Procoding.ApplicationTracker.Infrastructure.AiExtraction;
 using Procoding.ApplicationTracker.Infrastructure.Data;
 using Procoding.ApplicationTracker.Infrastructure.Emailing;
 using Procoding.ApplicationTracker.Infrastructure.Repositories;
@@ -50,6 +52,18 @@ public static class ServiceCollectionExtensions
     {
         services.Configure<SmtpEmailOptions>(configuration.GetSection(SmtpEmailOptions.SectionName));
         services.AddScoped<IEmailSender, SmtpEmailSender>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registers AI-powered job posting extraction (Gemini). Options bound from the "Gemini" config
+    /// section (API key from a secret). No-ops when the key is missing — the feature is simply unavailable.
+    /// </summary>
+    public static IServiceCollection AddAiExtraction(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<GeminiOptions>(configuration.GetSection(GeminiOptions.SectionName));
+        services.AddHttpClient<IJobPostingExtractor, GeminiJobPostingExtractor>();
 
         return services;
     }

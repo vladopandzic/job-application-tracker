@@ -108,6 +108,7 @@ jobs:
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           SMTP_FROM_EMAIL: ${{ secrets.SMTP_FROM_EMAIL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           $smtpPort = if ($env:SMTP_PORT) { [int]$env:SMTP_PORT } else { 587 }
           @{
@@ -126,6 +127,7 @@ jobs:
               FromName = "JobTrek"
               UseStartTls = $true
             }
+            Gemini = @{ ApiKey = $env:GEMINI_API_KEY; Model = "gemini-2.0-flash" }
           } | ConvertTo-Json -Depth 5 | Set-Content publish-api/appsettings.Production.json -Encoding utf8
 
       - name: Web Deploy -> MonsterASP (API)
