@@ -94,12 +94,15 @@ jobs:
         env:
           DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          SEED_ADMIN_EMAIL: ${{ secrets.SEED_ADMIN_EMAIL }}
+          SEED_ADMIN_PASSWORD: ${{ secrets.SEED_ADMIN_PASSWORD }}
         run: |
           @{
             DatabaseProvider = "SqlServer"
             ConnectionStrings = @{ JobApplicationDatabase = $env:DB_CONNECTION_STRING }
             EmployeeJwtTokenSettings = @{ SecretKey = $env:JWT_SECRET }
             CandidateJwtTokenSettings = @{ SecretKey = $env:JWT_SECRET }
+            SeedAdmin = @{ Email = $env:SEED_ADMIN_EMAIL; Password = $env:SEED_ADMIN_PASSWORD; FirstName = "Vlado"; LastName = "Pandzic" }
           } | ConvertTo-Json -Depth 5 | Set-Content publish-api/appsettings.Production.json -Encoding utf8
 
       - name: Web Deploy -> MonsterASP (API)

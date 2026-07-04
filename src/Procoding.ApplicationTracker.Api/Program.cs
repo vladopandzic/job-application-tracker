@@ -156,6 +156,19 @@ public class Program
             await TranslationSeeder.SeedAsync(translationDb);
         }
 
+        // Production admin bootstrap — creates the admin employee from configuration (secrets), never
+        // from hardcoded credentials. No-op if not configured or the account already exists.
+        using (var adminScope = app.Services.CreateScope())
+        {
+            var adminEmployeeManager = adminScope.ServiceProvider.GetRequiredService<UserManager<Employee>>();
+            var adminSection = app.Configuration.GetSection("SeedAdmin");
+            await AdminSeeder.SeedAsync(adminEmployeeManager,
+                                        adminSection["Email"],
+                                        adminSection["Password"],
+                                        adminSection["FirstName"],
+                                        adminSection["LastName"]);
+        }
+
         // Development-only demo data so the UI (Kanban board) has something to show.
         if (app.Environment.IsDevelopment())
         {
