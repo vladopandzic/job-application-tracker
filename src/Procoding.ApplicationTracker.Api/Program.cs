@@ -215,18 +215,27 @@ public class Program
 
         app.MapControllers();
 
-        // TEMP diagnostic — verifies the Gemini extraction path end-to-end. Remove after testing.
-        app.MapGet("/diag/extract", async (Procoding.ApplicationTracker.Application.Core.Abstractions.AiExtraction.IJobPostingExtractor extractor,
-                                           CancellationToken ct) =>
+        // TEMP diagnostic — raw Gemini call to surface the real error (model/key/quota). Remove after testing.
+        app.MapGet("/diag/extract", async (IConfiguration cfg, CancellationToken ct) =>
         {
-            const string sample = """
-                Senior .NET Engineer (Remote) — Contoso d.o.o.
-                Contoso (https://contoso.example) is hiring a Senior .NET Engineer to join our fully remote team.
-                Full-time position. You'll build ASP.NET Core APIs, work with PostgreSQL and Azure, and mentor juniors.
-                Requirements: 5+ years C#/.NET, EF Core, cloud experience. We offer flexible hours and a learning budget.
-                """;
-            var result = await extractor.ExtractAsync(sample, ct);
-            return result is null ? Results.Text("NULL — check Gemini key/logs") : Results.Json(result);
+            var key = cfg["Gemini:ApiKey"];
+            var model = cfg["Gemini:Model"] ?? "gemini-2.0-flash";
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return Results.Text("NO KEY in config (Gemini:ApiKey empty)");
+            }
+
+            var body = new
+            {
+                contents = new[] { new { parts = new[] { new { text = "Return a JSON object {\"ok\":true}." } } } },
+                generationConfig = new { responseMimeType = "application/json" }
+            };
+
+            using var http = new HttpClient();
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}";
+            using var resp = await System.Net.Http.Json.HttpClientJsonExtensions.PostAsJsonAsync(http, url, body, ct);
+            var text = await resp.Content.ReadAsStringAsync(ct);
+            return Results.Text($"model={model} status={(int)resp.StatusCode}\n{text.Substring(0, Math.Min(text.Length, 1500))}");
         });
 
         app.Run();
