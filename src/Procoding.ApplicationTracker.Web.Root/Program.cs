@@ -79,6 +79,7 @@ internal class Program
                                      services.AddHttpClient<ITranslationService, TranslationService>("ServerApi", x => x.BaseAddress = new Uri(baseApiUrl));
 
                                      services.AddScoped<LocalizationService>();
+                                     services.AddScoped<ServerSideTranslations>();
 
                                      services.AddTransient<INotificationService, NotificationService>();
                                  });

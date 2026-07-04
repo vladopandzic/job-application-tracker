@@ -1,22 +1,24 @@
 @model Procoding.ApplicationTracker.DTOs.Request.Candidates.CandidateLoginRequestDTO;
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
+@inject Procoding.ApplicationTracker.Web.Localization.ServerSideTranslations Tr
 @{
     Layout = null;
 
     // Match the language the user picked in the app (mirrored into the jf-lang cookie). Default Croatian.
-    var hr = Context.Request.Cookies["jf-lang"] != "en";
-    ViewBag.Title = hr ? "Prijava" : "Sign in";
+    var lang = Context.Request.Cookies["jf-lang"] == "en" ? "en" : "hr";
+    await Tr.EnsureLoadedAsync();
+    ViewBag.Title = Tr.T("auth.login.title", lang);
 
     // Prefill demo credentials in the test/dev environment only.
     var devEmail = Env.IsDevelopment() ? "demo@jobflow.app" : "";
     var devPassword = Env.IsDevelopment() ? "Demo123!" : "";
 }
 <!DOCTYPE html>
-<html lang="@(hr ? "hr" : "en")">
+<html lang="@lang">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@(hr ? "Prijava" : "Sign in") · JobTrek</title>
+    <title>@Tr.T("auth.login.title", lang) · JobTrek</title>
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/auth.css?v=2" />
@@ -26,12 +28,12 @@
         <aside class="auth-brand">
             <a class="auth-logo" href="/"><span class="auth-logo-mark"></span> JobTrek</a>
             <div class="auth-brand-copy">
-                <h1>@(hr ? "Dobro došao natrag." : "Welcome back.")</h1>
-                <p>@(hr ? "Nastavi točno ondje gdje si stao i drži svoju potragu za poslom u pokretu." : "Pick up right where you left off and keep your job search moving.")</p>
+                <h1>@Tr.T("auth.login.welcomeBack", lang)</h1>
+                <p>@Tr.T("auth.login.welcomeSub", lang)</p>
                 <ul class="auth-points">
-                    <li>@(hr ? "Vidi cijeli tijek na jednoj ploči" : "See your whole pipeline on one board")</li>
-                    <li>@(hr ? "Nijedna prijava ti neće promaknuti" : "Never lose track of an application")</li>
-                    <li>@(hr ? "Uvijek znaj što točno slijedi" : "Always know exactly what's next")</li>
+                    <li>@Tr.T("auth.point.pipeline", lang)</li>
+                    <li>@Tr.T("auth.point.neverLose", lang)</li>
+                    <li>@Tr.T("auth.point.whatsNext", lang)</li>
                 </ul>
             </div>
             <div class="auth-brand-foot">© 2026 JobTrek</div>
@@ -40,12 +42,12 @@
         <main class="auth-panel">
             <div class="auth-card">
                 <a class="auth-mobile-brand" href="/"><span class="auth-logo-mark"></span> JobTrek</a>
-                <h2>@(hr ? "Prijava" : "Sign in")</h2>
-                <p class="auth-sub">@(hr ? "Unesi svoje podatke za pristup ploči." : "Enter your details to access your board.")</p>
+                <h2>@Tr.T("auth.login.title", lang)</h2>
+                <p class="auth-sub">@Tr.T("auth.login.enterDetails", lang)</p>
 
                 @if (Context.Request.Query["registered"] == "1")
                 {
-                    <div class="auth-note">@(hr ? "Račun je kreiran — prijavi se." : "Account created — please sign in.")</div>
+                    <div class="auth-note">@Tr.T("auth.login.accountCreated", lang)</div>
                 }
 
                 @using (Html.BeginForm("Login", "Login", FormMethod.Post, new { @class = "auth-form" }))
@@ -53,19 +55,19 @@
                     @Html.AntiForgeryToken()
                     @Html.ValidationSummary(true, "", new { @class = "auth-error" })
 
-                    <label for="Email">@(hr ? "Email" : "Email")</label>
+                    <label for="Email">@Tr.T("auth.field.email", lang)</label>
                     <input class="auth-input" type="email" name="Email" id="Email" value="@devEmail" placeholder="you@example.com" autofocus />
                     @Html.ValidationMessageFor(a => a.Email, "", new { @class = "auth-error" })
 
-                    <label for="Password">@(hr ? "Lozinka" : "Password")</label>
+                    <label for="Password">@Tr.T("auth.field.password", lang)</label>
                     <input class="auth-input" type="password" name="Password" id="Password" value="@devPassword" placeholder="••••••••" />
                     @Html.ValidationMessageFor(a => a.Password, "", new { @class = "auth-error" })
 
-                    <button type="submit" class="auth-btn">@(hr ? "Prijavi se" : "Sign in")</button>
+                    <button type="submit" class="auth-btn">@Tr.T("auth.login.submit", lang)</button>
                 }
 
-                <p class="auth-alt">@(hr ? "Nemaš račun?" : "Don't have an account?") <a href="/Signup">@(hr ? "Kreiraj ga besplatno" : "Create one for free")</a></p>
-                <p class="auth-alt">@(hr ? "Zaposlenik?" : "Staff member?") <a href="/admin/login">@(hr ? "Prijava za administratore" : "Admin sign in")</a></p>
+                <p class="auth-alt">@Tr.T("auth.login.noAccount", lang) <a href="/Signup">@Tr.T("auth.login.createFree", lang)</a></p>
+                <p class="auth-alt">@Tr.T("auth.login.staff", lang) <a href="/admin/login">@Tr.T("auth.login.adminSignin", lang)</a></p>
             </div>
         </main>
     </div>

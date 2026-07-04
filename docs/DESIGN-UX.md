@@ -63,7 +63,11 @@ frontend is ever **ported to React** (the backend/API stays as-is — see the la
   separate route **`/admin/login`** (`AdminController`). There's a discreet link from `/Login`.
 - All three must be **complete HTML documents** (`Layout = null`) — a fragment shows blank under
   the interactive Blazor router.
-- They read the `jf-lang` cookie and render hr/en (default hr).
+- They read the `jf-lang` cookie for the language and pull the **same DB-backed translations** as the
+  rest of the app via `ServerSideTranslations` (a scoped MVC-side counterpart of `LocalizationService`
+  that fetches `GET /translations` once per request). So auth text is **admin-editable** too — no
+  hardcoded strings. Keys live under `auth.*` in the seeder. (Only the example-name *placeholders*
+  like "Ivan"/"Jane" stay inline — they're hints, not content.)
 - On mobile the split-screen brand panel is hidden, so each page shows a compact **`.auth-mobile-brand`**
   logo at the top so it isn't a bare form.
 

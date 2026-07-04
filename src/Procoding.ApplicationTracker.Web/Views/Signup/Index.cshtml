@@ -1,15 +1,17 @@
 @model Procoding.ApplicationTracker.DTOs.Request.Candidates.CandidateSignupRequestDTO
+@inject Procoding.ApplicationTracker.Web.Localization.ServerSideTranslations Tr
 @{
     Layout = null;
-    var hr = Context.Request.Cookies["jf-lang"] != "en";
-    ViewBag.Title = hr ? "Kreiraj račun" : "Create your account";
+    var lang = Context.Request.Cookies["jf-lang"] == "en" ? "en" : "hr";
+    await Tr.EnsureLoadedAsync();
+    ViewBag.Title = Tr.T("auth.signup.title", lang);
 }
 <!DOCTYPE html>
-<html lang="@(hr ? "hr" : "en")">
+<html lang="@lang">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@(hr ? "Kreiraj račun" : "Create your account") · JobTrek</title>
+    <title>@Tr.T("auth.signup.title", lang) · JobTrek</title>
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/auth.css?v=2" />
@@ -19,12 +21,12 @@
         <aside class="auth-brand">
             <a class="auth-logo" href="/"><span class="auth-logo-mark"></span> JobTrek</a>
             <div class="auth-brand-copy">
-                <h1>@(hr ? "Preuzmi kontrolu nad potragom za poslom." : "Take control of your job search.")</h1>
-                <p>@(hr ? "Kreiraj besplatni račun i pretvori neurednu tablicu u jasan proces koji vodi do cilja." : "Create your free account and turn a messy spreadsheet into a clear, winnable process.")</p>
+                <h1>@Tr.T("auth.signup.takeControl", lang)</h1>
+                <p>@Tr.T("auth.signup.takeControlSub", lang)</p>
                 <ul class="auth-points">
-                    <li>@(hr ? "Besplatno za početak — bez kreditne kartice" : "Free to start — no credit card required")</li>
-                    <li>@(hr ? "Prati prijave, intervjue i ponude" : "Track applications, interviews and offers")</li>
-                    <li>@(hr ? "Vidi cijeli tijek u jednom pogledu" : "See your whole pipeline at a glance")</li>
+                    <li>@Tr.T("auth.point.freeStart", lang)</li>
+                    <li>@Tr.T("auth.point.trackAll", lang)</li>
+                    <li>@Tr.T("auth.point.pipelineGlance", lang)</li>
                 </ul>
             </div>
             <div class="auth-brand-foot">© 2026 JobTrek</div>
@@ -33,34 +35,34 @@
         <main class="auth-panel">
             <div class="auth-card">
                 <a class="auth-mobile-brand" href="/"><span class="auth-logo-mark"></span> JobTrek</a>
-                <h2>@(hr ? "Kreiraj račun" : "Create your account")</h2>
-                <p class="auth-sub">@(hr ? "Počni pratiti svoje prijave u nekoliko minuta." : "Start tracking your applications in minutes.")</p>
+                <h2>@Tr.T("auth.signup.title", lang)</h2>
+                <p class="auth-sub">@Tr.T("auth.signup.startTracking", lang)</p>
 
                 @using (Html.BeginForm("Signup", "Signup", FormMethod.Post, new { @class = "auth-form" }))
                 {
                     @Html.AntiForgeryToken()
                     @Html.ValidationSummary(true, "", new { @class = "auth-error" })
 
-                    <label for="Name">@(hr ? "Ime" : "First name")</label>
-                    @Html.TextBoxFor(a => a.Name, new { @class = "auth-input", placeholder = hr ? "Ivan" : "Jane", autofocus = "autofocus" })
+                    <label for="Name">@Tr.T("auth.field.firstName", lang)</label>
+                    @Html.TextBoxFor(a => a.Name, new { @class = "auth-input", placeholder = lang == "en" ? "Jane" : "Ivan", autofocus = "autofocus" })
                     @Html.ValidationMessageFor(a => a.Name, "", new { @class = "auth-error" })
 
-                    <label for="Surname">@(hr ? "Prezime" : "Last name")</label>
-                    @Html.TextBoxFor(a => a.Surname, new { @class = "auth-input", placeholder = hr ? "Horvat" : "Doe" })
+                    <label for="Surname">@Tr.T("auth.field.lastName", lang)</label>
+                    @Html.TextBoxFor(a => a.Surname, new { @class = "auth-input", placeholder = lang == "en" ? "Doe" : "Horvat" })
                     @Html.ValidationMessageFor(a => a.Surname, "", new { @class = "auth-error" })
 
-                    <label for="Email">Email</label>
+                    <label for="Email">@Tr.T("auth.field.email", lang)</label>
                     @Html.TextBoxFor(a => a.Email, new { @class = "auth-input", type = "email", placeholder = "you@example.com" })
                     @Html.ValidationMessageFor(a => a.Email, "", new { @class = "auth-error" })
 
-                    <label for="Password">@(hr ? "Lozinka" : "Password")</label>
-                    @Html.PasswordFor(a => a.Password, new { @class = "auth-input", placeholder = hr ? "Kreiraj lozinku" : "Create a password" })
+                    <label for="Password">@Tr.T("auth.field.password", lang)</label>
+                    @Html.PasswordFor(a => a.Password, new { @class = "auth-input", placeholder = Tr.T("auth.signup.createPasswordPh", lang) })
                     @Html.ValidationMessageFor(a => a.Password, "", new { @class = "auth-error" })
 
-                    <button type="submit" class="auth-btn">@(hr ? "Kreiraj besplatni račun" : "Create free account")</button>
+                    <button type="submit" class="auth-btn">@Tr.T("auth.signup.submit", lang)</button>
                 }
 
-                <p class="auth-alt">@(hr ? "Već imaš račun?" : "Already have an account?") <a href="/Login">@(hr ? "Prijavi se" : "Sign in")</a></p>
+                <p class="auth-alt">@Tr.T("auth.signup.haveAccount", lang) <a href="/Login">@Tr.T("auth.signup.signin", lang)</a></p>
             </div>
         </main>
     </div>

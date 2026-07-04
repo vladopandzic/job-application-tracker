@@ -140,6 +140,15 @@ public class Program
         });
         var app = builder.Build();
 
+        // Apply any pending EF migrations on startup so a fresh (e.g. cloud) database gets its schema
+        // automatically — no separate "ef database update" step needed when deploying. Runs the
+        // migrations for the configured provider (Postgres / SqlServer). Idempotent.
+        using (var migrationScope = app.Services.CreateScope())
+        {
+            var migrationDb = migrationScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            await migrationDb.Database.MigrateAsync();
+        }
+
         // Base UI translations (Croatian + English) — seeded on every startup if missing.
         using (var translationScope = app.Services.CreateScope())
         {

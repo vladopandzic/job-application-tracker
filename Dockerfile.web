@@ -1,0 +1,20 @@
+# ---- build stage ----
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy everything (bin/obj/.git are excluded via .dockerignore) and restore + publish the Blazor host.
+COPY . .
+RUN dotnet restore src/Procoding.ApplicationTracker.Web.Root/Procoding.ApplicationTracker.Web.Root.csproj
+RUN dotnet publish src/Procoding.ApplicationTracker.Web.Root/Procoding.ApplicationTracker.Web.Root.csproj \
+    -c Release -o /app/publish /p:UseAppHost=false
+
+# ---- runtime stage ----
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+
+ENV ASPNETCORE_ENVIRONMENT=Production
+EXPOSE 8080
+
+# Bind to the hosting platform's $PORT (Render / Azure Container Apps set it) or 8080 by default.
+ENTRYPOINT ["/bin/sh", "-c", "ASPNETCORE_URLS=http://0.0.0.0:${PORT:-8080} exec dotnet Procoding.ApplicationTracker.Web.Root.dll"]
