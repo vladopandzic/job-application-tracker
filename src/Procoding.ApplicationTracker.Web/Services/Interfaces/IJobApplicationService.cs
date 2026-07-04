@@ -38,6 +38,9 @@ public interface IJobApplicationService
     /// </summary>
     Task<Result<ExtractedJobPostingResponseDTO>> ExtractJobPostingAsync(ExtractJobPostingRequestDTO request, CancellationToken cancellationToken = default);
 
+    /// <summary>AI-assisted import from a job posting URL (fetches the page, then extracts fields).</summary>
+    Task<Result<ExtractedJobPostingResponseDTO>> ExtractJobPostingFromUrlAsync(ExtractJobPostingFromUrlRequestDTO request, CancellationToken cancellationToken = default);
+
     /// <summary>Archives an application (hides it from the board/list, keeps it in the archive).</summary>
     Task<Result<Guid>> ArchiveJobApplicationAsync(Guid id, CancellationToken cancellationToken = default);
 

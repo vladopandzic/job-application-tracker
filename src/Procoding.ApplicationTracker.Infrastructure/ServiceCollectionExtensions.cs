@@ -64,6 +64,7 @@ public static class ServiceCollectionExtensions
     {
         services.Configure<GeminiOptions>(configuration.GetSection(GeminiOptions.SectionName));
         services.AddHttpClient<IJobPostingExtractor, GeminiJobPostingExtractor>();
+        services.AddHttpClient<IWebPageFetcher, WebPageFetcher>();
 
         return services;
     }

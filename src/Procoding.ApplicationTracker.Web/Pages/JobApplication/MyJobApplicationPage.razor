@@ -51,23 +51,17 @@ else if (ViewModel.JobApplication is not null)
                         <MudIcon Icon="@Icons.Material.Outlined.AutoAwesome" Color="Color.Primary" Class="mr-2" Size="Size.Small" />
                         <MudText Typo="Typo.subtitle2" Style="font-weight:600">Popuni AI-jem</MudText>
                     </div>
-                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Zalijepi tekst oglasa i AI će popuniti polja ispod.</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Zalijepi tekst oglasa <b>ili link</b> — AI prepozna što je i popuni polja. Neki portali (LinkedIn, Indeed) blokiraju dohvat linka; tad zalijepi tekst.</MudText>
                     <MudTextField @bind-Value="ViewModel.AiImportText"
-                                  Variant="Variant.Outlined"
-                                  Margin="Margin.Dense"
-                                  Lines="4"
-                                  AutoGrow="true"
-                                  MaxLines="8"
-                                  Class="mt-2"
-                                  Placeholder="Zalijepi cijeli tekst oglasa ovdje…"
-                                  Label="Tekst oglasa" />
+                                  Variant="Variant.Outlined" Margin="Margin.Dense"
+                                  Lines="4" AutoGrow="true" MaxLines="8" Class="mt-2"
+                                  Placeholder="Zalijepi tekst oglasa ili link (https://…)" Label="Tekst oglasa ili link" />
+
                     <div class="d-flex justify-end mt-2">
                         <MudButton OnClick="ImportFromAi"
-                                   Disabled="@(ViewModel.IsImporting || string.IsNullOrWhiteSpace(ViewModel.AiImportText) || ViewModel.AiImportText.Trim().Length < 30)"
+                                   Disabled="@(ViewModel.IsImporting || string.IsNullOrWhiteSpace(ViewModel.AiImportText))"
                                    StartIcon="@Icons.Material.Outlined.AutoAwesome"
-                                   Variant="Variant.Filled"
-                                   Color="Color.Primary"
-                                   Size="Size.Small">
+                                   Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small">
                             @(ViewModel.IsImporting ? "AI popunjava…" : "Popuni AI-jem")
                         </MudButton>
                     </div>

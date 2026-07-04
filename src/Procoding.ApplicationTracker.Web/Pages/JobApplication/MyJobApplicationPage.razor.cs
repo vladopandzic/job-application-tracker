@@ -122,7 +122,7 @@ public partial class MyJobApplicationPage : IDisposable
 
     private async Task ImportFromAi()
     {
-        var error = await ViewModel.ImportFromTextAsync();
+        var error = await ViewModel.ImportAsync();
 
         if (error is not null)
         {

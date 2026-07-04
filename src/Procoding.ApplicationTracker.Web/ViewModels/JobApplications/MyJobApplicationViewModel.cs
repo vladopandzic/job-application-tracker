@@ -37,8 +37,11 @@ public class MyJobApplicationViewModel : EditViewModelBase
     /// <summary>Controls the "edit application details" dialog (the form).</summary>
     public bool EditDetailsDialogVisible { get; set; }
 
-    /// <summary>Raw job posting text pasted by the user for AI import.</summary>
+    /// <summary>What the user pasted for AI import — either the job posting text or a single link.</summary>
     public string AiImportText { get; set; } = string.Empty;
+
+    /// <summary>Job posting URL (set internally when the pasted content is detected to be a link).</summary>
+    public string AiImportUrl { get; set; } = string.Empty;
 
     /// <summary>True while the AI extraction request is in flight.</summary>
     public bool IsImporting { get; set; }
@@ -316,6 +319,41 @@ public class MyJobApplicationViewModel : EditViewModelBase
     /// Only overwrites fields the model actually produced; the user reviews before saving.
     /// Returns a short status: null on success, otherwise an error message to surface.
     /// </summary>
+    /// <summary>
+    /// Single entry point for AI import — auto-detects whether the pasted content is a link or the raw
+    /// posting text, so the user doesn't have to pick a mode. Returns null on success, else an error.
+    /// </summary>
+    public async Task<string?> ImportAsync(CancellationToken cancellationToken = default)
+    {
+        var content = (AiImportText ?? string.Empty).Trim();
+
+        if (content.Length == 0)
+        {
+            return null;
+        }
+
+        if (LooksLikeUrl(content))
+        {
+            AiImportUrl = content;
+            return await ImportFromUrlAsync(cancellationToken);
+        }
+
+        if (content.Length < 30)
+        {
+            return "Zalijepi cijeli tekst oglasa ili link na oglas.";
+        }
+
+        return await ImportFromTextAsync(cancellationToken);
+    }
+
+    /// <summary>A single token starting with http(s):// and no whitespace is treated as a link, not text.</summary>
+    private static bool LooksLikeUrl(string content)
+    {
+        return !content.Any(char.IsWhiteSpace)
+               && Uri.TryCreate(content, UriKind.Absolute, out var uri)
+               && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+    }
+
     public async Task<string?> ImportFromTextAsync(CancellationToken cancellationToken = default)
     {
         if (JobApplication is null || string.IsNullOrWhiteSpace(AiImportText) || AiImportText.Trim().Length < 30)
@@ -333,7 +371,42 @@ public class MyJobApplicationViewModel : EditViewModelBase
             return result.Errors.FirstOrDefault()?.Message ?? "AI import nije uspio.";
         }
 
-        var extracted = result.Value;
+        ApplyExtractedToForm(result.Value);
+        return null;
+    }
+
+    /// <summary>
+    /// Fetches the posting from a URL via the AI extractor and pre-fills the form. Some sites block bots,
+    /// so this may fail — the error message tells the user to paste text instead.
+    /// </summary>
+    public async Task<string?> ImportFromUrlAsync(CancellationToken cancellationToken = default)
+    {
+        if (JobApplication is null || string.IsNullOrWhiteSpace(AiImportUrl))
+        {
+            return null;
+        }
+
+        IsImporting = true;
+        var result = await _jobApplicationService.ExtractJobPostingFromUrlAsync(
+            new DTOs.Request.JobApplications.ExtractJobPostingFromUrlRequestDTO { Url = AiImportUrl.Trim() }, cancellationToken);
+        IsImporting = false;
+
+        if (result.IsFailed)
+        {
+            return result.Errors.FirstOrDefault()?.Message ?? "AI import nije uspio.";
+        }
+
+        ApplyExtractedToForm(result.Value);
+        return null;
+    }
+
+    /// <summary>Pre-fills the form from an AI extraction result — only fields the model actually produced.</summary>
+    private void ApplyExtractedToForm(DTOs.Response.JobApplications.ExtractedJobPostingResponseDTO extracted)
+    {
+        if (JobApplication is null)
+        {
+            return;
+        }
 
         if (!string.IsNullOrWhiteSpace(extracted.PositionTitle))
         {
@@ -383,8 +456,6 @@ public class MyJobApplicationViewModel : EditViewModelBase
                 NewCompany = new CompanyDTO(Guid.Empty, extracted.CompanyName, extracted.CompanyWebsite ?? string.Empty);
             }
         }
-
-        return null;
     }
 
     private async Task GetCompanies(CancellationToken cancellationToken)
