@@ -1,6 +1,7 @@
 using FluentValidation;
 using MapsterMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -135,6 +136,13 @@ public class Program
 
         }).AddJwtCreator<Candidate>(builder.Configuration, "CandidateJwtTokenSettings");
 
+
+        // Persist Data Protection keys to disk so Identity tokens (email confirmation, password reset)
+        // survive app-pool recycles on IIS/MonsterASP. Without this the key ring is regenerated on
+        // restart and previously-sent confirmation links stop validating.
+        builder.Services.AddDataProtection()
+                        .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "dataprotection-keys")))
+                        .SetApplicationName("JobTrek");
 
         builder.Services.AddAuthorization(options =>
         {
