@@ -231,11 +231,28 @@ public class Program
                 generationConfig = new { responseMimeType = "application/json" }
             };
 
+            string[] candidates =
+            {
+                "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash-exp",
+                "gemini-1.5-flash", "gemini-flash-latest", "gemini-2.0-flash"
+            };
+
             using var http = new HttpClient();
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}";
-            using var resp = await System.Net.Http.Json.HttpClientJsonExtensions.PostAsJsonAsync(http, url, body, ct);
-            var text = await resp.Content.ReadAsStringAsync(ct);
-            return Results.Text($"model={model} status={(int)resp.StatusCode}\n{text.Substring(0, Math.Min(text.Length, 1500))}");
+            var lines = new List<string>();
+            foreach (var m in candidates)
+            {
+                try
+                {
+                    var url = $"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={key}";
+                    using var resp = await System.Net.Http.Json.HttpClientJsonExtensions.PostAsJsonAsync(http, url, body, ct);
+                    lines.Add($"{m} -> {(int)resp.StatusCode} {resp.StatusCode}");
+                }
+                catch (Exception ex)
+                {
+                    lines.Add($"{m} -> EX {ex.Message}");
+                }
+            }
+            return Results.Text(string.Join("\n", lines));
         });
 
         app.Run();
