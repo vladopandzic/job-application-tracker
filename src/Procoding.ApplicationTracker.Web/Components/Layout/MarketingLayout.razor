@@ -1,4 +1,5 @@
 @using Procoding.ApplicationTracker.Web.Localization
+@using Microsoft.AspNetCore.Components.Authorization
 @inherits LayoutComponentBase
 @implements IDisposable
 @inject LocalizationService Loc
@@ -26,8 +27,15 @@
                     </button>
                 }
             </div>
-            <AuthLink Href="/Login" Class="mkt-btn mkt-btn-ghost">@Loc.T("mkt.nav.signin")</AuthLink>
-            <AuthLink Href="/Signup" Class="mkt-btn mkt-btn-primary">@Loc.T("mkt.nav.getStarted")</AuthLink>
+            <AuthorizeView>
+                <Authorized>
+                    <AuthLink Href="/home" Class="mkt-btn mkt-btn-primary">@(Loc.CurrentLanguage == "en" ? "Open app" : "Otvori app")</AuthLink>
+                </Authorized>
+                <NotAuthorized>
+                    <AuthLink Href="/Login" Class="mkt-btn mkt-btn-ghost">@Loc.T("mkt.nav.signin")</AuthLink>
+                    <AuthLink Href="/Signup" Class="mkt-btn mkt-btn-primary">@Loc.T("mkt.nav.getStarted")</AuthLink>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
     </header>
 

@@ -2,6 +2,7 @@
 @layout MarketingLayout
 @attribute [AllowAnonymous]
 @using Procoding.ApplicationTracker.Web.Localization
+@using Microsoft.AspNetCore.Components.Authorization
 @implements IDisposable
 @inject LocalizationService Loc
 
@@ -14,8 +15,15 @@
             <h1>@Loc.T("mkt.hero.titlePre") <span class="grad">@Loc.T("mkt.hero.titleHighlight")</span>.</h1>
             <p>@Loc.T("mkt.hero.subtitle")</p>
             <div class="mkt-hero-cta">
-                <AuthLink Href="/Signup" Class="mkt-btn mkt-btn-primary mkt-btn-lg">@Loc.T("mkt.hero.ctaPrimary")</AuthLink>
-                <AuthLink Href="/Login" Class="mkt-btn mkt-btn-ghost mkt-btn-lg">@Loc.T("mkt.hero.ctaSecondary")</AuthLink>
+                <AuthorizeView>
+                    <Authorized>
+                        <AuthLink Href="/home" Class="mkt-btn mkt-btn-primary mkt-btn-lg">@(Loc.CurrentLanguage == "en" ? "Open app" : "Otvori app")</AuthLink>
+                    </Authorized>
+                    <NotAuthorized>
+                        <AuthLink Href="/Signup" Class="mkt-btn mkt-btn-primary mkt-btn-lg">@Loc.T("mkt.hero.ctaPrimary")</AuthLink>
+                        <AuthLink Href="/Login" Class="mkt-btn mkt-btn-ghost mkt-btn-lg">@Loc.T("mkt.hero.ctaSecondary")</AuthLink>
+                    </NotAuthorized>
+                </AuthorizeView>
             </div>
             <div class="mkt-hero-trust">@Loc.T("mkt.hero.trust")</div>
         </div>
@@ -96,7 +104,14 @@
 <section class="mkt-cta-band">
     <h2>@Loc.T("mkt.cta.title")</h2>
     <p>@Loc.T("mkt.cta.subtitle")</p>
-    <AuthLink Href="/Signup" Class="mkt-btn mkt-btn-primary mkt-btn-lg">@Loc.T("mkt.cta.button")</AuthLink>
+    <AuthorizeView>
+        <Authorized>
+            <AuthLink Href="/home" Class="mkt-btn mkt-btn-primary mkt-btn-lg">@(Loc.CurrentLanguage == "en" ? "Open app" : "Otvori app")</AuthLink>
+        </Authorized>
+        <NotAuthorized>
+            <AuthLink Href="/Signup" Class="mkt-btn mkt-btn-primary mkt-btn-lg">@Loc.T("mkt.cta.button")</AuthLink>
+        </NotAuthorized>
+    </AuthorizeView>
 </section>
 
 @code {
