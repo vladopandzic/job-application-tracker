@@ -37,6 +37,10 @@ public class MyJobApplicationViewModel : EditViewModelBase
     /// <summary>Controls the "edit application details" dialog (the form).</summary>
     public bool EditDetailsDialogVisible { get; set; }
 
+    /// <summary>Set when a save was paused to collect a new company's details — after the company is
+    /// created we resume saving the application automatically.</summary>
+    public bool ContinueSaveAfterCompany { get; set; }
+
     /// <summary>What the user pasted for AI import — either the job posting text or a single link.</summary>
     public string AiImportText { get; set; } = string.Empty;
 
@@ -166,8 +170,9 @@ public class MyJobApplicationViewModel : EditViewModelBase
         var website = Validators.FluentValidationExtensions.NormalizeUrl(company.OfficialWebSiteLink);
         if (string.IsNullOrWhiteSpace(website))
         {
-            // New company but no website to satisfy the domain — let the user supply it in the dialog.
+            // New company but no website to satisfy the domain — collect it in the dialog, then resume the save.
             NewCompany = new CompanyDTO(Guid.Empty, company.CompanyName, string.Empty);
+            ContinueSaveAfterCompany = true;
             CreateNewCompanyDialogVisible = true;
             return false;
         }
@@ -180,8 +185,9 @@ public class MyJobApplicationViewModel : EditViewModelBase
             return true;
         }
 
-        // Backend rejected it (e.g. invalid URL) — fall back to the dialog so the user can fix it.
+        // Backend rejected it (e.g. invalid URL) — fall back to the dialog so the user can fix it, then resume.
         NewCompany = new CompanyDTO(Guid.Empty, company.CompanyName, company.OfficialWebSiteLink);
+        ContinueSaveAfterCompany = true;
         CreateNewCompanyDialogVisible = true;
         _notificationService.ShowMessageFromResult(result);
         return false;
@@ -222,6 +228,7 @@ public class MyJobApplicationViewModel : EditViewModelBase
             if (result.IsSuccess)
             {
                 JobApplication.Id = result.Value.JobApplication.Id;
+                EditDetailsDialogVisible = false;
             }
             _notificationService.ShowMessageFromResult(result);
         }
@@ -237,6 +244,10 @@ public class MyJobApplicationViewModel : EditViewModelBase
                                                                                                           WorkLocationType: JobApplication.WorkLocationType,
                                                                                                           Description: JobApplication.Description));
 
+            if (result.IsSuccess)
+            {
+                EditDetailsDialogVisible = false;
+            }
             _notificationService.ShowMessageFromResult(result);
         }
 
@@ -306,6 +317,15 @@ public class MyJobApplicationViewModel : EditViewModelBase
                 JobApplication!.Company = result.Value.Company;
                 CreateNewCompanyDialogVisible = false;
                 NewCompany = new CompanyDTO(Guid.Empty, "", "");
+
+                // If we opened this dialog mid-save, finish saving the application now that the company exists.
+                if (ContinueSaveAfterCompany)
+                {
+                    ContinueSaveAfterCompany = false;
+                    IsSaving = false;
+                    await SaveAsync();
+                    return;
+                }
             }
             _notificationService.ShowMessageFromResult(result);
         }

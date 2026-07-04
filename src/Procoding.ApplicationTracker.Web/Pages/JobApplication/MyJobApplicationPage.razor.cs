@@ -89,10 +89,15 @@ public partial class MyJobApplicationPage : IDisposable
         await newNewCompanyForm!.Validate();
         await ViewModel.SaveNewCompany();
 
-        if (ViewModel.JobApplication?.Company?.Id != Guid.Empty)
+        // Only reflect the selection in the autocomplete if the edit dialog is still open (it's closed/disposed
+        // when SaveNewCompany resumed and completed the application save).
+        if (ViewModel.EditDetailsDialogVisible && mudCompanyAutocomplete is not null && ViewModel.JobApplication?.Company?.Id != Guid.Empty)
         {
             await mudCompanyAutocomplete.SelectOption(ViewModel.JobApplication!.Company);
         }
+
+        // If creating the company resumed and completed the application save, reflect its real id in the URL.
+        NavigateToSavedIfNeeded();
     }
 
     protected async Task OnSubmit()
@@ -104,8 +109,23 @@ public partial class MyJobApplicationPage : IDisposable
             return;
         }
 
+        // SaveAsync closes the dialog on success; if it paused to collect a new company's details it
+        // stays open (behind the company dialog) and resumes automatically after the company is created.
         await ViewModel.SaveAsync();
-        ViewModel.EditDetailsDialogVisible = false;
+        NavigateToSavedIfNeeded();
+    }
+
+    // After a brand-new application is saved, swap the "/new" URL for its real id so the page reflects
+    // the persisted record (and a refresh/share links to the actual application).
+    private void NavigateToSavedIfNeeded()
+    {
+        if (Id == "new"
+            && ViewModel.JobApplication is not null
+            && ViewModel.JobApplication.Id != Guid.Empty
+            && !ViewModel.EditDetailsDialogVisible)
+        {
+            NavigationManager.NavigateTo($"/my-job-applications/{ViewModel.JobApplication.Id}");
+        }
     }
 
     private void OpenEditDetails() => ViewModel.EditDetailsDialogVisible = true;
