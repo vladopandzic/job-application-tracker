@@ -15,10 +15,10 @@ public class RevalidatingServerAuthenticationState : RevalidatingServerAuthentic
         _authService = authService;
     }
 
-    // The access token is valid for 1h — refresh well within that, not every few seconds. The old 8s
-    // interval churned the token claims constantly, and any API call that landed in the tear-down/rebuild
-    // window saw a missing access_token → 401 → the board silently showed "0 applications".
-    protected override TimeSpan RevalidationInterval => TimeSpan.FromMinutes(30);
+    // The access token now lives as long as the auth cookie (30 days), so it won't expire mid-session and
+    // we don't need to churn it. Revalidate rarely — the old 8s interval rotated the refresh token
+    // constantly (invalidating the cookie's token), which is exactly what left the board empty after ~1h.
+    protected override TimeSpan RevalidationInterval => TimeSpan.FromHours(12);
 
     protected override async Task<bool> ValidateAuthenticationStateAsync(AuthenticationState authenticationState, CancellationToken cancellationToken)
     {
