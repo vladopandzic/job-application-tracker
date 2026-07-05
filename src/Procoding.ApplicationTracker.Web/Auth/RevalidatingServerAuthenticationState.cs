@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components.Authorization;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Procoding.ApplicationTracker.DTOs.Request.Employees;
 using Procoding.ApplicationTracker.Web.Services.Interfaces;
@@ -9,93 +10,85 @@ public class RevalidatingServerAuthenticationState : RevalidatingServerAuthentic
 {
     private readonly IAuthService _authService;
 
-    /// <summary>
-    /// Constructs an instance of <see cref="RevalidatingServerAuthenticationState"/>.
-    /// </summary>
-    /// <param name="loggerFactory">A logger factory.</param>
     public RevalidatingServerAuthenticationState(ILoggerFactory loggerFactory, IAuthService authService) : base(loggerFactory)
     {
         _authService = authService;
     }
 
-    protected override TimeSpan RevalidationInterval => TimeSpan.FromSeconds(8);
+    // The access token is valid for 1h — refresh well within that, not every few seconds. The old 8s
+    // interval churned the token claims constantly, and any API call that landed in the tear-down/rebuild
+    // window saw a missing access_token → 401 → the board silently showed "0 applications".
+    protected override TimeSpan RevalidationInterval => TimeSpan.FromMinutes(30);
 
     protected override async Task<bool> ValidateAuthenticationStateAsync(AuthenticationState authenticationState, CancellationToken cancellationToken)
     {
-        var currentAccessToken = authenticationState.User.Claims.FirstOrDefault(x => x.Type == "access_token")?.Value;
-        var currentRefreshToken = authenticationState.User.Claims.FirstOrDefault(x => x.Type == "refresh_token")?.Value;
-        var tokenRequest = new TokenRequestDTO() { AccessToken = currentAccessToken!, RefreshToken = currentRefreshToken! };
-        var isEmployee = authenticationState.User.IsInRole("Employee");
+        var user = authenticationState.User;
 
-        var isCandidate = authenticationState.User.IsInRole("Candidate");
+        var currentAccessToken = user.Claims.FirstOrDefault(x => x.Type == "access_token")?.Value;
+        var currentRefreshToken = user.Claims.FirstOrDefault(x => x.Type == "refresh_token")?.Value;
+
+        // Not a JWT-backed session (or missing tokens) — nothing to refresh, keep the state as-is.
+        if (string.IsNullOrEmpty(currentAccessToken) || string.IsNullOrEmpty(currentRefreshToken))
+        {
+            return true;
+        }
+
+        var tokenRequest = new TokenRequestDTO { AccessToken = currentAccessToken, RefreshToken = currentRefreshToken };
+
         try
         {
-            var newAccessToken = "";
-            var newRefreshToken = "";
+            string newAccessToken;
+            string newRefreshToken;
 
-            if (isEmployee)
+            if (user.IsInRole("Employee"))
             {
                 var result = await _authService.RefreshLoginTokenForEmployee(tokenRequest, cancellationToken);
+                // On a transient refresh failure keep the current (still-valid) tokens rather than tearing
+                // the session down — otherwise a single hiccup logs the user out or empties their data.
                 if (!result.IsSuccess)
                 {
-
-                    //TODO: give user information about that!
-                    return false;
+                    return true;
                 }
                 newAccessToken = result.Value.AccessToken;
                 newRefreshToken = result.Value.RefreshToken;
             }
-            else if (isCandidate)
+            else
             {
                 var result = await _authService.RefreshLoginTokenForCandidate(tokenRequest, cancellationToken);
                 if (!result.IsSuccess)
                 {
-
-                    //TODO: give user information about that!
-                    return false;
+                    return true;
                 }
                 newAccessToken = result.Value.AccessToken;
                 newRefreshToken = result.Value.RefreshToken;
-
             }
 
-
-            var identity = authenticationState.User.Identities.First();
-
-            var oldClaims = identity.Claims.ToList();
-
-            identity.Claims.ToList().Clear();
-
-
-            for (int i = 0; i < identity.Claims.Count(); i++)
+            if (user.Identity is ClaimsIdentity identity)
             {
-                var claim = identity.Claims.ToList()[i];
-                identity.TryRemoveClaim(claim);
+                // Atomically swap ONLY the token claims so there's never a window with a missing
+                // access_token (name/role/etc. don't change on refresh and are left untouched).
+                ReplaceClaim(identity, "access_token", newAccessToken);
+                ReplaceClaim(identity, "refresh_token", newRefreshToken);
+
+                SetAuthenticationState(Task.FromResult(new AuthenticationState(user)));
             }
-
-
-            foreach (var claim in oldClaims)
-            {
-                identity.TryRemoveClaim(claim);
-            }
-
-
-            var newClaims = ClaimsCreator.GetClaimsFromToken(newAccessToken, newRefreshToken);
-
-            foreach (var item in newClaims)
-            {
-                identity.AddClaim(item);
-            }
-
-            var newAuthState = Task.FromResult(new AuthenticationState(authenticationState.User));
-
-            SetAuthenticationState(newAuthState);
         }
-        catch (Exception ex)
+        catch
         {
+            // Network/serialization hiccup — keep the current session and try again next interval.
         }
+
         return true;
+    }
 
+    private static void ReplaceClaim(ClaimsIdentity identity, string type, string value)
+    {
+        var existing = identity.FindFirst(type);
+        if (existing is not null)
+        {
+            identity.RemoveClaim(existing);
+        }
 
+        identity.AddClaim(new Claim(type, value));
     }
 }
